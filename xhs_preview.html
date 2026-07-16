@@ -140,6 +140,21 @@
   .p-detail .sec .sb{font-size:21px;line-height:1.7;color:var(--ink);}
   .p-detail .photo{height:360px;border:2px dashed rgba(43,41,38,.22);display:flex;align-items:center;justify-content:center;color:var(--ink40);font-size:20px;letter-spacing:.04em;text-align:center;background:rgba(43,41,38,.03);}
 
+  /* 双 opportunity 合并一页（无图触点） */
+  .p-detail-double .pg-bd{justify-content:flex-start;gap:0;padding-top:var(--gap-hd);}
+  .p-detail-item{display:flex;flex-direction:column;gap:var(--sp-4);padding:var(--sp-4) 0;}
+  .p-detail-item:first-child{padding-top:0;}
+  .p-detail-item + .p-detail-item{border-top:2px solid var(--line);margin-top:var(--sp-3);padding-top:var(--sp-5);}
+  .p-detail-double .p-detail-item{gap:var(--sp-3);}
+  .p-detail-double .tp-name{font-size:38px;}
+  .p-detail-double .why-block{padding:var(--sp-2) var(--sp-3);}
+  .p-detail-double .why-block .sb{font-size:22px;}
+  .p-detail-double .impact-fix{gap:var(--sp-3);}
+  .p-detail-double .sec .sb{font-size:18px;line-height:1.6;}
+
+  /* 单页无图：内容靠上，减少空白感 */
+  .p-detail-no-photo .pg-bd{justify-content:flex-start;padding-top:var(--gap-hd);}
+
   /* 引导页 —— 内容充实 */
   .p-about .pg-bd{flex:1;justify-content:center;gap:var(--sp-7);}
   .p-about .lead{font-size:30px;font-weight:700;line-height:1.55;font-family:var(--title);}
@@ -352,7 +367,7 @@ function polar(scores, labels, w, h, pad){
   return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${grid}${axes}${bench}${area}${dots}${labs}</svg>`;
 }
 
-function renderCover(){
+function renderCover(totalPages){
   return `<div class="page"><div class="pg p-cover">
     <div class="pg-hd"><div class="left"><div class="title">STDM · 门店经营触点诊断</div><div class="sub">STORE TOUCHPOINT DIAGNOSTIC MAP</div></div><div class="mark"></div></div>
     <div class="rule"></div>
@@ -375,12 +390,12 @@ function renderCover(){
     </div>
     <div class="pg-ft">
       <div class="sig"><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="no">01 / 06</div>
+      <div class="no">01 / ${totalPages}</div>
     </div>
   </div></div>`;
 }
 
-function renderConclusion(){
+function renderConclusion(totalPages){
   const sysSvg = polar(SAMPLE.systems, ['品牌','产品','空间','服务','运营','关系','信任'], 430, 380, 34);
   const jnySvg = polar(SAMPLE.journeys, ['看得见','找得着','等得住','进得来','吃得好','会再来'], 430, 380, 34);
   const lossBars = SAMPLE.losses.map(l=>{
@@ -411,49 +426,77 @@ function renderConclusion(){
     </div>
     <div class="pg-ft">
       <div class="sig"><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="no">02 / ${2+OPPS.length+1}</div>
+      <div class="no">02 / ${totalPages}</div>
     </div>
   </div></div>`;
 }
 
-function renderDetail(o,i,total){
-  return `<div class="page"><div class="pg p-detail">
-    <div class="pg-hd"><div class="left"><div class="title">机会点 0${i+1}</div><div class="sub">OPPORTUNITY POINT · ${o.state}</div></div><div class="mark"></div></div>
+function renderDetailItem(o, compact, cls){
+  const num = String(o._idx+1).padStart(2,'0');
+  return `<div class="${cls}">
+    <div class="tp-row">
+      <div class="tp-name">${compact?num+'　':''}${o.tp}</div>
+      <div class="tp-meta">
+        <div class="chip">${o.jn}</div>
+        <div class="chip">${o.sys}</div>
+        <div class="chip red">${o.loss}</div>
+      </div>
+    </div>
+    <div class="why-block">
+      <div class="st">问题本质　· WHY</div>
+      <div class="sb">${o.why}</div>
+    </div>
+    ${NO_PHOTO_TPS.has(o.id)?'':`<div class="photo">${o.photo ? `<img src="${o.photo}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">` : '门店实拍图位 · 示意（待杨老师到店实拍）'}</div>`}
+    <div class="impact-fix">
+      <div class="col">
+        <div class="sec">
+          <div class="st">经营影响　· <b>IMPACT</b></div>
+          <div class="sb">${o.impact}</div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="sec">
+          <div class="st">整改方向　· <b>FIX</b></div>
+          <div class="sb">${o.fix}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function renderDetailPage(group, groupIndex, totalPages){
+  const pageNum = 3 + groupIndex;
+  const isDouble = group.length === 2;
+  const hasPhoto = group.some(o => !NO_PHOTO_TPS.has(o.id));
+  const title = isDouble ? '机会点详情' : `机会点 ${String(group[0]._idx+1).padStart(2,'0')}`;
+  const sub = isDouble ? 'OPPORTUNITY POINTS' : `OPPORTUNITY POINT · ${group[0].state}`;
+  const itemsHTML = group.map(o => renderDetailItem(o, isDouble, isDouble?'p-detail-item':'')).join('');
+  const extraCls = isDouble ? 'p-detail-double' : (hasPhoto ? '' : 'p-detail-no-photo');
+  return `<div class="page"><div class="pg p-detail ${extraCls}">
+    <div class="pg-hd"><div class="left"><div class="title">${title}</div><div class="sub">${sub}</div></div><div class="mark"></div></div>
     <div class="rule"></div>
     <div class="pg-bd">
-      <div class="tp-row">
-        <div class="tp-name">${o.tp}</div>
-        <div class="tp-meta">
-          <div class="chip">${o.jn}</div>
-          <div class="chip">${o.sys}</div>
-          <div class="chip red">${o.loss}</div>
-        </div>
-      </div>
-      <div class="why-block">
-        <div class="st">问题本质　· WHY</div>
-        <div class="sb">${o.why}</div>
-      </div>
-      ${NO_PHOTO_TPS.has(o.id)?'':`<div class="photo">${o.photo ? `<img src="${o.photo}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">` : '门店实拍图位 · 示意（待杨老师到店实拍）'}</div>`}
-      <div class="impact-fix">
-        <div class="col">
-          <div class="sec">
-            <div class="st">经营影响　· <b>IMPACT</b></div>
-            <div class="sb">${o.impact}</div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="sec">
-            <div class="st">整改方向　· <b>FIX</b></div>
-            <div class="sb">${o.fix}</div>
-          </div>
-        </div>
-      </div>
+      ${itemsHTML}
     </div>
     <div class="pg-ft">
       <div class="sig"><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="no">${i+3} / ${2+total+1}</div>
+      <div class="no">${pageNum} / ${totalPages}</div>
     </div>
   </div></div>`;
+}
+function groupOpps(opps){
+  const groups = [];
+  let i = 0;
+  while(i < opps.length){
+    const o = opps[i];
+    if(NO_PHOTO_TPS.has(o.id) && i+1 < opps.length && NO_PHOTO_TPS.has(opps[i+1].id)){
+      groups.push([{...o, _idx:i}, {...opps[i+1], _idx:i+1}]);
+      i += 2;
+    }else{
+      groups.push([{...o, _idx:i}]);
+      i += 1;
+    }
+  }
+  return groups;
 }
 
 function renderAbout(total){
@@ -500,10 +543,11 @@ function renderAbout(total){
   </div></div>`;
 }
 
-const total = 2 + OPPS.length + 1;
-let html = renderCover() + renderConclusion();
-OPPS.forEach((o,i)=>html += renderDetail(o,i,OPPS.length));
-html += renderAbout(total);
+const groups = groupOpps(OPPS);
+const totalPages = 2 + groups.length + 1;
+let html = renderCover(totalPages) + renderConclusion(totalPages);
+groups.forEach((g,i)=>html += renderDetailPage(g,i,totalPages));
+html += renderAbout(totalPages);
 document.getElementById('stage').innerHTML = html;
 
 // 未注入真实数据时显示提示；拖拽 JSON 可加载真实数据
@@ -650,7 +694,7 @@ function buildReportLongHTML(){
     <div class="rl-disc">※ 本报告基于单次实地到店诊断，结论仅代表该门店当次经营表现，不代表品牌整体及旗下其他门店水平。${HAS_REAL_DATA?'':'【演示】本案例基于公开网络资料模拟生成，非真实到店 SI 诊断，仅用于流程演示。'}</div>
     <div class="rl-ft">
       <div><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="r">STDM v2.6.27</div>
+      <div class="r">STDM v2.6.28</div>
     </div>
   </div>`;
 }
