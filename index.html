@@ -1374,23 +1374,14 @@ function exportXHSData(){
     issues, done, total:totalItems, bad, warn, redTriggered, date:info.f_date||new Date().toISOString().slice(0,10), who:info.f_who||"—", cat:info.f_cat||"—"
   };
   localStorage.setItem("xhs_data", JSON.stringify(payload));
-  // JSON 下载
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="xhs_stdm_data.json";a.click();
-  // 打开同域预览页（顶部有「下载 PNG」按钮，可直接浏览器出图）
-  try{ window.open('xhs_preview.html', '_blank'); }catch(e){ console.error('打开预览页失败', e); }
-  // 生成可直接打开的独立 HTML（内嵌数据）
-  fetch('xhs_preview.html').then(r=>r.text()).then(tpl=>{
-    const injected = `window.__XHS_DATA__ = ${JSON.stringify(payload)};\n`;
-    // 在 <script> 标签后注入数据，让 loadXHSData 优先读取并覆盖默认值
-    const out = tpl.replace(/<script>\n/, `<script>\n${injected}`);
-    const htmlBlob = new Blob([out], {type:"text/html"});
-    const a2=document.createElement("a");a2.href=URL.createObjectURL(htmlBlob);a2.download="xhs_preview.html";a2.click();
-    alert("小红书图文已准备：\n1. 已打开「小红书图文预览」页，打开后会自动生成并下载「小红书分图 ZIP」与「诊断报告长图 PDF」；\n2. 若浏览器拦截自动下载，请点击顶部「下载全部图片 (ZIP)」「下载报告 PDF」手动获取；\n3. xhs_stdm_data.json 已下载（供本地 node export_xhs.js 高质量导出）；\n4. xhs_preview.html 已下载（内嵌数据，可离线打开）。");
-  }).catch(e=>{
-    console.error('生成独立预览 HTML 失败', e);
-    alert("小红书图文已准备：\n1. 已打开「小红书图文预览」页，打开后会自动生成并下载分图 ZIP 与报告 PDF；\n2. 若自动下载被拦截，请点击顶部按钮手动获取；\n3. xhs_stdm_data.json 已下载。\n\n若浏览器端生成异常，请使用 node export_xhs.js。");
-  });
+  // 只打开同域预览页，图片/PDF 在预览页内生成并下载，不在主工具里弹下载对话框
+  try{
+    window.open('xhs_preview.html', '_blank');
+    alert("已打开「小红书图文预览」页，请去那个新页面查看自动生成的图片与 PDF。\n若浏览器拦截了新页面，请直接点击地址栏旁的提示允许弹窗，或点击本页「打印报告」左侧的「导出小红书图文」再次打开。");
+  }catch(e){
+    console.error('打开预览页失败', e);
+    alert("打开小红书图文预览页失败，请检查浏览器是否拦截了弹窗。");
+  }
 }
 function closeReport(){document.getElementById("report").style.display="none";document.body.classList.remove("report-open");}
 function printReport(){window.print();}
