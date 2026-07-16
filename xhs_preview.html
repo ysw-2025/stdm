@@ -235,6 +235,8 @@ const SAMPLE = {
   losses:[{"name":"流量损耗","n":1,"total":9},{"name":"转化损耗","n":2,"total":9},{"name":"体验损耗","n":0,"total":9},{"name":"效率损耗","n":0,"total":9},{"name":"信任损耗","n":0,"total":9},{"name":"复购损耗","n":0,"total":9}]
 };
 const OPPS = [{"id":1,"tp":"节点导视/入口指引","jn":"找得着","sys":"空间系统","loss":"流量损耗","state":"✗ 漏钱","why":"找不到入口就会放弃，商场店尤其严重。","impact":"找不到入口就会放弃，商场店尤其严重。直接拉低该经营段转化与口碑，是本次诊断的核心漏钱点。","fix":"主入口做明确地标与发光指引；商场店补关键节点导视。","img":true},{"id":2,"tp":"入口进入阻力","jn":"进得来","sys":"空间系统","loss":"转化损耗","state":"✗ 漏钱","why":"入口封闭、压迫，会在门口劝退顾客。","impact":"入口封闭、压迫，会在门口劝退顾客。直接拉低该经营段转化与口碑，是本次诊断的核心漏钱点。","fix":"门改开放通透式；消除进门心理压迫与障碍。","img":true},{"id":3,"tp":"等位区舒适度","jn":"等得住","sys":"空间系统","loss":"转化损耗","state":"✗ 漏钱","why":"等待难受，顾客直接走人，白白流失已到店客流。","impact":"等待难受，顾客直接走人，白白流失已到店客流。直接拉低该经营段转化与口碑，是本次诊断的核心漏钱点。","fix":"增设座椅、遮阳取暖；提供水/小吃降低等待痛苦。","img":true}];
+// 行为/流程/线上类触点：无需门店照佐证，小红书报告页也不显示照片占位框
+const NO_PHOTO_TPS = new Set([8,14,15,19,20,23,29,30,32]);
 let HAS_REAL_DATA = false;
 let META = { who:'—', cat:'—', date:new Date().toISOString().slice(0,10), redTriggered:false, done:0, total:0, bad:0, warn:0 };
 // 只内联本地字体（同源可抓），避免 html-to-image 抓取 Google Fonts 远程 CSS 触发跨域 SecurityError
@@ -431,7 +433,7 @@ function renderDetail(o,i,total){
         <div class="st">问题本质　· WHY</div>
         <div class="sb">${o.why}</div>
       </div>
-      <div class="photo">${o.photo ? `<img src="${o.photo}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">` : '门店实拍图位 · 示意（待杨老师到店实拍）'}</div>
+      ${NO_PHOTO_TPS.has(o.id)?'':`<div class="photo">${o.photo ? `<img src="${o.photo}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">` : '门店实拍图位 · 示意（待杨老师到店实拍）'}</div>`}
       <div class="impact-fix">
         <div class="col">
           <div class="sec">
@@ -609,7 +611,7 @@ function buildReportLongHTML(){
   }).join('');
   const lossCards = SAMPLE.losses.map(l=>`<div class="c"><div class="n">${l.n}</div><div class="l">${l.name}</div></div>`).join('');
   const oppsHTML = OPPS.map((o,i)=>{
-    const ph = o.photo ? `<div class="ph"><img src="${o.photo}" alt=""></div>` : `<div class="ph">门店实拍图位 · 示意（待杨老师到店实拍）</div>`;
+    const ph = NO_PHOTO_TPS.has(o.id) ? '' : (o.photo ? `<div class="ph"><img src="${o.photo}" alt=""></div>` : `<div class="ph">门店实拍图位 · 示意（待杨老师到店实拍）</div>`);
     return `<div class="rl-opp">
       <div class="oh"><div class="on">机会点 ${String(i+1).padStart(2,'0')}　${o.tp}</div><div class="os">${o.state}</div></div>
       <div class="chips"><span>${o.jn}</span><span>${o.sys}</span><span class="red">${o.loss}</span></div>
@@ -648,7 +650,7 @@ function buildReportLongHTML(){
     <div class="rl-disc">※ 本报告基于单次实地到店诊断，结论仅代表该门店当次经营表现，不代表品牌整体及旗下其他门店水平。${HAS_REAL_DATA?'':'【演示】本案例基于公开网络资料模拟生成，非真实到店 SI 诊断，仅用于流程演示。'}</div>
     <div class="rl-ft">
       <div><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="r">STDM v2.6.26</div>
+      <div class="r">STDM v2.6.27</div>
     </div>
   </div>`;
 }
