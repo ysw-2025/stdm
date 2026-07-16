@@ -219,9 +219,10 @@
   <input id="fileInput" type="file" accept="application/json" style="display:none">
 </div>
 <div class="stage" id="stage"></div>
-<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<!-- 已改为本地库，避免 CDN 加载失败导致无法生成 -->
+<script src="lib/html-to-image.min.js"></script>
+<script src="lib/jszip.min.js"></script>
+<script src="lib/jspdf.umd.min.js"></script>
 <script>
 // === XHS_DATA_BLOCK_START ===
 // 主工具导出时会在下方注入 window.__XHS_DATA__，然后 loadXHSData 用真实数据覆盖默认值
