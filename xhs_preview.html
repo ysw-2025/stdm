@@ -96,30 +96,30 @@
   .p-cover .pg-ft{margin-top:var(--sp-3);}
 
   /* 结论页 */
-  .p-con .scorebar{display:flex;gap:var(--sp-5);align-items:flex-start;margin-top:var(--sp-4);}
-  .p-con .score-main{min-width:360px;}
-  .p-con .score-main .big{font-size:150px;font-weight:900;line-height:.88;color:var(--red);font-family:var(--sans);}
-  .p-con .score-main .tag{display:inline-block;background:var(--red);color:#fff;padding:var(--sp-1) var(--sp-3);font-size:20px;font-weight:700;margin-top:var(--sp-2);}
-  .p-con .score-main .sub{font-size:18px;color:var(--ink60);margin-top:var(--sp-2);line-height:1.5;}
+  .p-con .scorebar{display:flex;gap:var(--sp-5);align-items:flex-start;margin-top:var(--sp-3);}
+  .p-con .score-main{min-width:320px;}
+  .p-con .score-main .big{font-size:130px;font-weight:900;line-height:.88;color:var(--red);font-family:var(--sans);}
+  .p-con .score-main .tag{display:inline-block;background:var(--red);color:#fff;padding:var(--sp-1) var(--sp-3);font-size:18px;font-weight:700;margin-top:var(--sp-1);}
+  .p-con .score-main .sub{font-size:16px;color:var(--ink60);margin-top:var(--sp-1);line-height:1.5;}
   .p-con .kpi{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);}
   .p-con .kpi .k{background:rgba(43,41,38,.04);padding:var(--sp-3) var(--sp-2);}
   .p-con .kpi .k .t{font-size:14px;color:var(--ink60);letter-spacing:.04em;}
-  .p-con .kpi .k .v{font-size:36px;font-weight:900;color:var(--red);margin-top:var(--sp-1);font-family:var(--sans);}
+  .p-con .kpi .k .v{font-size:32px;font-weight:900;color:var(--red);margin-top:var(--sp-1);font-family:var(--sans);}
   .p-con .kpi .k .u{font-size:14px;color:var(--ink60);margin-top:var(--sp-1);}
-  .p-con .charts{display:flex;gap:var(--sp-4);margin-top:var(--sp-4);flex:1;min-height:0;}
-  .p-con .chart{flex:1;background:rgba(43,41,38,.04);display:flex;flex-direction:column;padding:var(--sp-3) var(--sp-2);}
-  .p-con .chart .ct{font-size:20px;font-weight:700;text-align:center;margin-bottom:var(--sp-1);}
-  .p-con .chart .ce{font-size:10px;color:var(--ink40);text-align:center;letter-spacing:.1em;margin-bottom:var(--sp-2);}
+  .p-con .charts{display:flex;gap:var(--sp-3);margin-top:var(--sp-3);flex:1;min-height:0;}
+  .p-con .chart{flex:1;background:rgba(43,41,38,.04);display:flex;flex-direction:column;padding:var(--sp-2);}
+  .p-con .chart .ct{font-size:18px;font-weight:700;text-align:center;margin-bottom:var(--sp-1);}
+  .p-con .chart .ce{font-size:9px;color:var(--ink40);text-align:center;letter-spacing:.1em;margin-bottom:var(--sp-1);}
   .p-con .chart svg{flex:1;width:100%;}
-  .p-con .losses{margin-top:var(--sp-3);background:rgba(43,41,38,.04);padding:var(--sp-2) var(--sp-3);}
-  .p-con .losses .lh{font-size:18px;font-weight:700;margin-bottom:var(--sp-2);}
+  .p-con .losses{margin-top:var(--sp-2);background:rgba(43,41,38,.04);padding:var(--sp-2) var(--sp-3);}
+  .p-con .losses .lh{font-size:16px;font-weight:700;margin-bottom:var(--sp-1);}
   .p-con .losses .lh b{font-weight:400;color:var(--ink60);}
-  .p-con .losses .item{display:flex;align-items:center;margin-bottom:var(--sp-1);}
-  .p-con .losses .name{width:90px;font-size:16px;color:var(--ink);}
-  .p-con .losses .bar{flex:1;height:11px;background:rgba(43,41,38,.10);margin:0 var(--sp-2);position:relative;}
+  .p-con .losses .item{display:flex;align-items:center;margin-bottom:var(--sp-0);}
+  .p-con .losses .name{width:80px;font-size:14px;color:var(--ink);}
+  .p-con .losses .bar{flex:1;height:9px;background:rgba(43,41,38,.10);margin:0 var(--sp-2);position:relative;}
   .p-con .losses .bar i{position:absolute;left:0;top:0;height:100%;background:var(--red);}
-  .p-con .losses .count{width:36px;text-align:right;font-size:16px;color:var(--ink60);font-family:var(--sans);}
-  .p-con .con-text{background:rgba(168,82,74,.08);border-left:6px solid var(--red);padding:var(--sp-3) var(--sp-4);margin-top:var(--sp-4);font-size:18px;line-height:1.7;color:var(--ink);}
+  .p-con .losses .count{width:36px;text-align:right;font-size:14px;color:var(--ink60);font-family:var(--sans);}
+  .p-con .con-text{background:rgba(168,82,74,.08);border-left:6px solid var(--red);padding:var(--sp-2) var(--sp-3);margin-top:var(--sp-3);font-size:16px;line-height:1.7;color:var(--ink);}
   .p-con .con-text b{color:var(--red);font-weight:700;}
 
   /* 详情页 —— 内容优先，大图占满；单页间距与合并页统一 */
@@ -298,6 +298,15 @@ async function ensureFontBase64(){
 // === XHS_DATA_BLOCK_END ===
 
 // 数据加载：优先 window.__XHS_DATA__（导出脚本注入），其次 localStorage.xhs_data
+function normalizeKeys(obj, desired){
+  const out = {};
+  for(const k of desired) out[k] = 0;
+  for(const [k,v] of Object.entries(obj)){
+    const key = desired.find(d => k === d || k === d + '系统') || k;
+    out[key] = (typeof v === 'number') ? v : parseFloat(v) || 0;
+  }
+  return out;
+}
 function loadXHSData(raw){
   if(!raw) return false;
   try{
@@ -305,7 +314,10 @@ function loadXHSData(raw){
     if(d.brand!==undefined) DATA.brand = d.brand;
     if(d.score!==undefined) DATA.score = d.score;
     if(d.opps!==undefined) DATA.opps = d.opps;
-    if(d.systems) SAMPLE.systems = d.systems;
+    if(d.systems){
+      // 兼容主工具导出的带"系统"后缀键名（如"品牌系统"→"品牌"）
+      SAMPLE.systems = normalizeKeys(d.systems, ['品牌','产品','空间','服务','运营','信任','关系']);
+    }
     if(d.journeys) SAMPLE.journeys = d.journeys;
     if(d.losses) SAMPLE.losses = d.losses;
     SAMPLE.score = DATA.score;
@@ -431,8 +443,8 @@ function buildConclusionText(){
 
 function renderConclusion(totalPages){
   const conText = buildConclusionText();
-  const sysSvg = polar(SAMPLE.systems, ['品牌','产品','空间','服务','运营','关系','信任'], 430, 380, 34);
-  const jnySvg = polar(SAMPLE.journeys, ['看得见','找得着','等得住','进得来','吃得好','会再来'], 430, 380, 34);
+  const sysSvg = polar(SAMPLE.systems, ['品牌','产品','空间','服务','运营','关系','信任'], 430, 300, 34);
+  const jnySvg = polar(SAMPLE.journeys, ['看得见','找得着','等得住','进得来','吃得好','会再来'], 430, 300, 34);
   const lossBars = SAMPLE.losses.map(l=>{
     const pct = (l.n/l.total*100).toFixed(0);
     return `<div class="item"><div class="name">${l.name}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="count">${l.n}/${l.total}</div></div>`;
@@ -730,7 +742,7 @@ function buildReportLongHTML(){
     <div class="rl-disc">※ 本报告基于单次实地到店诊断，结论仅代表该门店当次经营表现，不代表品牌整体及旗下其他门店水平。${HAS_REAL_DATA?'':'【演示】本案例基于公开网络资料模拟生成，非真实到店 SI 诊断，仅用于流程演示。'}</div>
     <div class="rl-ft">
       <div><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="r">STDM v2.6.37</div>
+      <div class="r">STDM v2.6.38</div>
     </div>
   </div>`;
 }
