@@ -651,24 +651,21 @@ async function generateReportPDF(){
   if(btn) btn.disabled = false;
 }
 
-// 打开后自动生成（小红书分图 ZIP + 报告 PDF）
-let _autoDone = false;
+// 打开后仅渲染预览，不自动下载，等待用户点击按钮
+let _previewReady = false;
 async function initExport(){
-  if(!HAS_REAL_DATA || _autoDone) return;
-  _autoDone = true;
+  if(!HAS_REAL_DATA || _previewReady) return;
   const status = document.getElementById('tb-status');
-  status.textContent = '正在生成图片与报告…';
+  status.textContent = '正在渲染预览…';
   try{
-    const urls = await capturePages();
-    const zip = new JSZip();
-    const brand = (DATA.brand||'stdm').replace(/[\\/:*?"<>|]/g,'_');
-    urls.forEach((u,i)=> zip.file('xhs_' + String(i+1).padStart(2,'0') + '.png', u.split(',')[1], { base64:true }));
-    triggerDownload(await zip.generateAsync({ type:'blob' }), 'xhs_stdm_' + brand + '.zip');
-    status.textContent = '图片已下载，正在生成报告…';
-    await generateReportPDF();
+    await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,300));
+    // 仅确保页面已渲染完毕，不自动触发下载
+    _previewReady = true;
+    status.textContent = '预览已就绪，请点上方按钮下载';
   }catch(e){
     console.error(e);
-    status.textContent = '自动生成失败，请手动点击按钮';
+    status.textContent = '渲染失败，请刷新重试';
   }
 }
 if(typeof window !== 'undefined'){
