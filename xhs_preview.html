@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STDM 小红书图文 · 内容优先版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  @font-face{
+    font-family:"汇文明朝体";
+    src:url('fonts/huiwenmincho-improved.woff2') format('woff2');
+    font-display:swap;
+    font-weight:400 900;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{background:#dcdad3;}
+  #fallback{display:none;position:fixed;inset:0;z-index:9999;background:#F2EEE4;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center;color:#2B2926;}
+  #fallback h1{font-size:32px;font-weight:700;margin-bottom:16px;}
+  #fallback p{font-size:18px;line-height:1.8;color:#2B2926;opacity:.7;max-width:560px;}
+  #dropzone{margin-top:32px;padding:24px 40px;border:2px dashed #A8524A;border-radius:8px;color:#A8524A;font-size:18px;cursor:pointer;}
+  .toolbar{position:sticky;top:0;left:0;right:0;z-index:1001;background:#F2EEE4;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(0,0,0,.08);font-family:var(--sans);}
+  .tb-title{font-weight:900;font-size:16px;color:var(--ink);letter-spacing:.02em;}
+  .tb-desc{flex:1;font-size:13px;color:var(--ink60);}
+  .tb-btn{padding:7px 16px;background:var(--red);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;font-weight:700;}
+  .tb-btn:disabled{opacity:.5;cursor:wait;}
+  .tb-btn.secondary{background:#fff;color:var(--red);border:1px solid var(--red);}
+  .tb-status{font-size:13px;color:var(--red);min-width:120px;text-align:right;}
+  .stage{zoom:.56;display:flex;flex-direction:column;align-items:center;gap:36px;padding:40px 0;}
+  .page{width:1080px;min-height:1440px;background:#F2EEE4;
+    font-family:var(--serif);line-height:1.5;
+    box-shadow:0 12px 40px rgba(0,0,0,.16);display:flex;flex-direction:column;}
+
+  :root{
+    /* ===== 间距标尺 spacing scale（8pt 网格，所有间距必须取自此处，禁止裸 px） ===== */
+    /*  --sp-0 4   极微：标签内字距/装饰细缝
+        --sp-1 8   微：标题与副标内的极小缝
+        --sp-2 12  组内亲密：标题↔副标、数字↔单位、chip内、列表项
+        --sp-3 16  卡片内边距基准、区块内小组
+        --sp-4 24  标准栏目间距
+        --sp-5 32  中区块分隔（栏目之间）
+        --sp-6 48  大区块分隔（品牌组↔红带 之类分水岭）
+        --sp-7 64  页面级呼吸（版心下边距 / 顶部落位）
+        --sp-8 96  跨级大留白
+        --edge 84  版心左右固定留白（=页面左轴线 x=84，全页元素对齐到此） */
+    --sp-0:4px; --sp-1:8px; --sp-2:12px; --sp-3:16px; --sp-4:24px;
+    --sp-5:32px; --sp-6:48px; --sp-7:64px; --sp-8:96px; --edge:84px;
+    --gap-hd:var(--sp-6); --gap-ft:var(--sp-5); /* 页头安全距:细线下沿→内容首块 / 页尾安全距:内容末块→页脚上沿 */
+
+    --paper:#F2EEE4; --ink:#2B2926; --ink60:rgba(43,41,38,.58);
+    --ink40:rgba(43,41,38,.40); --red:#A8524A; --line:rgba(43,41,38,.14);
+    --redbg:rgba(168,82,74,.10);
+    --serif:"Noto Serif SC","Songti SC",serif;
+    --title:"汇文明朝体","Huiwen Mincho","方正粗圆宋简体","Noto Serif SC",serif;
+    --sans:"方正粗圆宋简体","FZCuYuanSongS-B","Noto Sans SC",sans-serif;
+  }
+  .serif{font-family:var(--serif);}
+  .pg-hd .sub,.p-con .losses .lh b,.p-about .section-sub,.p-detail .st b,.p-about .journey .e{font-family:var(--sans);}
+
+
+  .pg{flex:1;padding:var(--edge);display:flex;flex-direction:column;}
+  .pg-hd{display:flex;justify-content:space-between;align-items:flex-start;}
+  .pg-hd .title{font-size:22px;font-weight:700;letter-spacing:.04em;color:var(--ink);font-family:var(--title);}
+  .pg-hd .sub{font-size:16px;font-weight:400;letter-spacing:.2em;margin-top:var(--sp-1);color:var(--ink60);}
+  .pg-hd .mark{width:26px;height:26px;background:var(--red);flex-shrink:0;margin-top:4px;}
+  .pg-hd .left{max-width:760px;}
+  .rule{height:1px;background:var(--line);margin:var(--sp-5) 0 0;}
+
+  .pg-bd{flex:1;display:flex;flex-direction:column;padding-top:var(--gap-hd);}
+  .pg-ft{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;padding-top:var(--gap-ft);}
+  .pg-ft .sig .a{font-size:22px;font-weight:700;letter-spacing:.02em;}
+  .pg-ft .sig .b{font-size:16px;font-weight:400;letter-spacing:.03em;margin-top:var(--sp-1);color:var(--ink60);}
+  .pg-ft .no{font-size:16px;color:var(--ink40);letter-spacing:.1em;font-family:var(--sans);}
+
+  /* 封面 — 左对齐网格 + 红条横贯基准带；权重 品牌>红条>健康分，三要素共享左轴 x=84
+     节奏：品牌组 → 红带 →(自动吸空间)→ 健康分 → 免责声明 → 页脚，声明紧贴页脚无底部空洞 */
+  .p-cover{padding:var(--edge);}
+  .p-cover .pg-bd{flex:1;display:flex;flex-direction:column;}
+  .p-cover .sk5{height:var(--sp-5);}
+  .p-cover .sk7{height:var(--sp-7);}
+  .p-cover .sk6{height:var(--sp-6);}
+  .p-cover .sk-x{flex:1;min-height:120px;}
+  .p-cover .brand-block{align-self:flex-start;}
+  .p-cover .brand{font-size:220px;font-weight:900;line-height:.86;letter-spacing:.01em;font-family:var(--title);color:var(--ink);}
+  .p-cover .subtitle{font-size:84px;font-weight:700;letter-spacing:.04em;margin-top:var(--sp-3);font-family:var(--title);color:var(--ink60);}
+  .p-cover .ops-block{width:100%;}
+  .p-cover .ops-bar{display:block;width:100%;background:var(--red);color:#fff;text-align:center;padding:var(--sp-4) 0;font-size:58px;font-weight:700;letter-spacing:.04em;}
+  .p-cover .ops-bar .n{font-family:var(--sans);padding-right:var(--sp-2);}
+  .p-cover .score-row{display:flex;align-items:baseline;gap:var(--sp-3);}
+  .p-cover .score{font-size:128px;font-weight:900;line-height:1;letter-spacing:-.02em;color:var(--red);font-family:var(--sans);}
+  .p-cover .score-label{font-size:34px;font-weight:400;letter-spacing:.16em;color:var(--ink60);}
+  .p-cover .disclaimer{padding-top:var(--sp-3);border-top:1px solid var(--line);font-size:22px;line-height:1.7;letter-spacing:.02em;color:var(--ink40);max-width:820px;}
+  .p-cover .disclaimer .demo-tag{display:block;margin-top:var(--sp-2);font-size:18px;font-weight:700;letter-spacing:.04em;color:var(--red);}
+  .p-cover .pg-ft{margin-top:var(--sp-4);}
+
+  /* 结论页 */
+  .p-con .scorebar{display:flex;gap:var(--sp-6);align-items:flex-start;margin-top:var(--sp-5);}
+  .p-con .score-main{min-width:400px;}
+  .p-con .score-main .big{font-size:210px;font-weight:900;line-height:.88;color:var(--red);font-family:var(--sans);}
+  .p-con .score-main .tag{display:inline-block;background:var(--red);color:#fff;padding:var(--sp-1) var(--sp-4);font-size:22px;font-weight:700;margin-top:var(--sp-2);}
+  .p-con .score-main .sub{font-size:20px;color:var(--ink60);margin-top:var(--sp-2);line-height:1.5;}
+  .p-con .kpi{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3);}
+  .p-con .kpi .k{background:rgba(43,41,38,.04);padding:var(--sp-4) var(--sp-3);}
+  .p-con .kpi .k .t{font-size:16px;color:var(--ink60);letter-spacing:.04em;}
+  .p-con .kpi .k .v{font-size:42px;font-weight:900;color:var(--red);margin-top:var(--sp-1);font-family:var(--sans);}
+  .p-con .kpi .k .u{font-size:16px;color:var(--ink60);margin-top:var(--sp-1);}
+  .p-con .charts{display:flex;gap:var(--sp-5);margin-top:var(--sp-5);flex:1;min-height:0;}
+  .p-con .chart{flex:1;background:rgba(43,41,38,.04);display:flex;flex-direction:column;padding:var(--sp-4) var(--sp-3);}
+  .p-con .chart .ct{font-size:22px;font-weight:700;text-align:center;margin-bottom:var(--sp-1);}
+  .p-con .chart .ce{font-size:10.5px;color:var(--ink40);text-align:center;letter-spacing:.12em;margin-bottom:var(--sp-2);}
+  .p-con .chart svg{flex:1;width:100%;}
+  .p-con .losses{margin-top:var(--sp-4);background:rgba(43,41,38,.04);padding:var(--sp-3) var(--sp-4);}
+  .p-con .losses .lh{font-size:20px;font-weight:700;margin-bottom:var(--sp-3);}
+  .p-con .losses .lh b{font-weight:400;color:var(--ink60);}
+  .p-con .losses .item{display:flex;align-items:center;margin-bottom:var(--sp-2);}
+  .p-con .losses .name{width:100px;font-size:18px;color:var(--ink);}
+  .p-con .losses .bar{flex:1;height:13px;background:rgba(43,41,38,.10);margin:0 var(--sp-3);position:relative;}
+  .p-con .losses .bar i{position:absolute;left:0;top:0;height:100%;background:var(--red);}
+  .p-con .losses .count{width:40px;text-align:right;font-size:18px;color:var(--ink60);font-family:var(--sans);}
+
+  /* 详情页 —— 内容优先，大图占满 */
+  .p-detail .pg-bd{flex:1;justify-content:center;gap:var(--sp-7);}
+  .p-detail .tp-row{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--sp-3);}
+  .p-detail .tp-name{font-size:62px;font-weight:900;line-height:1.05;font-family:var(--title);}
+  .p-detail .tp-meta{display:flex;gap:var(--sp-2);align-items:center;}
+  .p-detail .chip{padding:var(--sp-1) var(--sp-3);font-size:18px;border:1px solid var(--line);color:var(--ink60);}
+  .p-detail .chip.red{border-color:var(--red);color:var(--red);font-weight:700;}
+
+  .p-detail .why-block{background:rgba(168,82,74,.08);padding:var(--sp-4) var(--sp-5);border-left:6px solid var(--red);}
+  .p-detail .why-block .st{font-size:18px;font-weight:700;letter-spacing:.08em;color:var(--red);margin-bottom:var(--sp-2);}
+  .p-detail .why-block .sb{font-size:30px;line-height:1.6;color:var(--ink);font-weight:500;}
+
+  .p-detail .impact-fix{display:grid;grid-template-columns:1.2fr 1fr;gap:var(--sp-5);}
+  .p-detail .impact-fix .col{display:flex;flex-direction:column;gap:var(--sp-5);}
+  .p-detail .sec{border-top:1px solid var(--line);padding-top:var(--sp-3);}
+  .p-detail .sec .st{font-size:18px;font-weight:700;letter-spacing:.08em;color:var(--red);margin-bottom:var(--sp-2);}
+  .p-detail .sec .st b{font-weight:400;color:var(--ink60);}
+  .p-detail .sec .sb{font-size:23px;line-height:1.7;color:var(--ink);}
+  .p-detail .photo{height:420px;border:2px dashed rgba(43,41,38,.22);display:flex;align-items:center;justify-content:center;color:var(--ink40);font-size:20px;letter-spacing:.04em;text-align:center;background:rgba(43,41,38,.03);}
+
+  /* 引导页 —— 内容充实 */
+  .p-about .pg-bd{flex:1;justify-content:center;gap:var(--sp-7);}
+  .p-about .lead{font-size:30px;font-weight:700;line-height:1.55;font-family:var(--title);}
+  .p-about .lead .red{color:var(--red);}
+  .p-about .section-title{font-size:22px;font-weight:700;letter-spacing:.04em;margin-top:var(--sp-2);font-family:var(--title);}
+  .p-about .section-sub{font-size:16px;color:var(--ink60);letter-spacing:.12em;margin-top:var(--sp-1);}
+  .p-about .axis-list{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--sp-2);margin-top:var(--sp-2);}
+  .p-about .axis-list .a{background:rgba(43,41,38,.04);padding:var(--sp-2) var(--sp-1);font-size:18px;font-weight:500;text-align:center;}
+  .p-about .journey{display:flex;justify-content:space-between;align-items:center;margin-top:var(--sp-1);padding:var(--sp-3) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .p-about .journey .j{text-align:center;font-size:20px;font-weight:700;}
+  .p-about .journey .j .e{font-size:14px;color:var(--ink40);letter-spacing:.08em;margin-top:var(--sp-1);}
+  .p-about .journey .arr{font-size:22px;color:var(--red);}
+  .p-about .stations{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-2);}
+  .p-about .stations .s{background:rgba(43,41,38,.04);padding:var(--sp-3);}
+  .p-about .stations .s .n{font-size:18px;font-weight:700;}
+  .p-about .stations .s .e{font-size:14px;color:var(--ink40);margin-top:var(--sp-1);}
+  .p-about .quote{font-size:22px;line-height:1.7;color:var(--ink);border-left:4px solid var(--red);padding-left:var(--sp-3);margin-top:var(--sp-2);}
+  .p-about .cta{background:var(--red);color:#fff;padding:var(--sp-4) var(--sp-5);display:flex;justify-content:space-between;align-items:center;margin-top:auto;}
+  .p-about .cta .t{font-size:26px;font-weight:700;}
+  .p-about .cta .u{font-size:16px;margin-top:var(--sp-1);opacity:.85;}
+  .p-about .cta .h{font-size:19px;font-weight:700;}
+
+  /* 诊断报告长图（PDF 载体，仅供截图/导出，默认移出视口） */
+  .report-long{position:fixed;left:-10000px;top:0;width:1080px;background:var(--paper);font-family:var(--serif);
+    color:var(--ink);line-height:1.6;padding:var(--edge);box-sizing:border-box;}
+  .report-long .rl-hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--red);padding-bottom:var(--sp-3);}
+  .report-long .rl-hd .b{font-family:var(--title);font-size:64px;font-weight:900;line-height:1;}
+  .report-long .rl-hd .t{font-size:26px;font-weight:700;letter-spacing:.04em;margin-top:var(--sp-2);font-family:var(--title);}
+  .report-long .rl-meta{display:flex;gap:var(--sp-5);margin-top:var(--sp-3);font-size:18px;color:var(--ink60);}
+  .report-long .rl-meta b{color:var(--ink);font-weight:700;}
+  .report-long .rl-score{display:flex;align-items:baseline;gap:var(--sp-3);margin:var(--sp-5) 0;padding:var(--sp-4) var(--sp-5);background:var(--redbg);}
+  .report-long .rl-score .n{font-family:var(--sans);font-size:120px;font-weight:900;line-height:1;color:var(--red);}
+  .report-long .rl-score .lab{font-size:30px;font-weight:700;}
+  .report-long .rl-score .lv{margin-left:auto;font-size:24px;font-weight:700;color:var(--red);}
+  .report-long .rl-sec-t{font-family:var(--title);font-size:30px;font-weight:900;margin:var(--sp-6) 0 var(--sp-3);padding-left:var(--sp-3);border-left:8px solid var(--red);}
+  .report-long .rl-bars{display:flex;flex-direction:column;gap:var(--sp-2);}
+  .report-long .rl-bars .row{display:flex;align-items:center;}
+  .report-long .rl-bars .nm{width:120px;font-size:20px;font-weight:700;}
+  .report-long .rl-bars .track{flex:1;height:18px;background:rgba(43,41,38,.10);position:relative;margin:0 var(--sp-3);}
+  .report-long .rl-bars .track i{position:absolute;left:0;top:0;height:100%;background:var(--red);}
+  .report-long .rl-bars .vl{width:64px;text-align:right;font-family:var(--sans);font-size:20px;font-weight:900;color:var(--red);}
+  .report-long .rl-loss{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3);}
+  .report-long .rl-loss .c{background:rgba(43,41,38,.04);padding:var(--sp-3);text-align:center;}
+  .report-long .rl-loss .c .n{font-family:var(--sans);font-size:40px;font-weight:900;color:var(--red);}
+  .report-long .rl-loss .c .l{font-size:18px;margin-top:var(--sp-1);}
+  .report-long .rl-disc{margin-top:var(--sp-4);font-size:18px;line-height:1.7;color:var(--ink40);border-top:1px solid var(--line);padding-top:var(--sp-3);}
+  .report-long .rl-opp{border-top:2px solid var(--red);margin-top:var(--sp-5);padding-top:var(--sp-4);}
+  .report-long .rl-opp .oh{display:flex;justify-content:space-between;align-items:baseline;}
+  .report-long .rl-opp .on{font-family:var(--title);font-size:34px;font-weight:900;}
+  .report-long .rl-opp .os{font-size:20px;font-weight:700;color:var(--red);}
+  .report-long .rl-opp .chips{display:flex;gap:var(--sp-2);margin:var(--sp-2) 0;}
+  .report-long .rl-opp .chips span{padding:var(--sp-1) var(--sp-3);font-size:16px;border:1px solid var(--line);color:var(--ink60);}
+  .report-long .rl-opp .chips span.red{border-color:var(--red);color:var(--red);font-weight:700;}
+  .report-long .rl-opp .blk{margin-top:var(--sp-3);}
+  .report-long .rl-opp .blk .lt{font-size:18px;font-weight:700;color:var(--red);letter-spacing:.06em;}
+  .report-long .rl-opp .blk .bd{font-size:22px;line-height:1.7;margin-top:var(--sp-1);}
+  .report-long .rl-opp .ph{height:300px;margin-top:var(--sp-3);border:2px dashed rgba(43,41,38,.22);display:flex;align-items:center;justify-content:center;color:var(--ink40);font-size:18px;background:rgba(43,41,38,.03);overflow:hidden;}
+  .report-long .rl-opp .ph img{width:100%;height:100%;object-fit:cover;}
+  .report-long .rl-ft{display:flex;justify-content:space-between;align-items:flex-end;margin-top:var(--sp-7);padding-top:var(--sp-4);border-top:1px solid var(--line);}
+  .report-long .rl-ft .a{font-size:22px;font-weight:700;}
+  .report-long .rl-ft .b{font-size:16px;color:var(--ink60);margin-top:var(--sp-1);}
+  .report-long .rl-ft .r{font-size:16px;color:var(--ink40);}
+</style>
+</head>
+<body>
+<div class="toolbar" id="toolbar">
+  <span class="tb-title">STDM 小红书图文预览</span>
+  <span class="tb-desc">打开后自动生成小红书分图（ZIP）与诊断报告长图（PDF）；如浏览器端异常，请用本地 node export_xhs.js。</span>
+  <span class="tb-status" id="tb-status"></span>
+  <button class="tb-btn secondary" onclick="downloadJSON()">下载 JSON</button>
+  <button class="tb-btn secondary" onclick="generateReportPDF()">下载报告 PDF</button>
+  <button class="tb-btn" onclick="downloadAllImages()">下载全部图片 (ZIP)</button>
+</div>
+<div id="fallback" onclick="document.getElementById('fileInput').click()">
+  <h1>未检测到诊断数据</h1>
+  <p>本文件为 STDM 小红书图文模板。<br>直接打开会显示「塔斯汀」演示数据；<br>如需显示你的真实门店数据，请在主工具中点击「导出小红书图文」，下载内嵌数据的 HTML 文件。</p>
+  <div id="dropzone">点击上传 JSON 数据 或拖拽 xhs_stdm_data.json 到此处</div>
+  <input id="fileInput" type="file" accept="application/json" style="display:none">
+</div>
+<div class="stage" id="stage"></div>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+// === XHS_DATA_BLOCK_START ===
+// 主工具导出时会在下方注入 window.__XHS_DATA__，然后 loadXHSData 用真实数据覆盖默认值
+const DATA = { brand:'塔斯汀', score:93, opps:3 };
+const SAMPLE = {
+  score:93, level:'标杆店', levelSub:'系统有 3 个关键机会点未达标',
+  systems:{"品牌":100,"产品":100,"空间":73,"服务":100,"运营":100,"信任":100,"关系":100},
+  journeys:{"看得见":98,"找得着":88,"等得住":80,"进得来":86,"吃得好":100,"会再来":100},
+  losses:[{"name":"流量损耗","n":1,"total":9},{"name":"转化损耗","n":2,"total":9},{"name":"体验损耗","n":0,"total":9},{"name":"效率损耗","n":0,"total":9},{"name":"信任损耗","n":0,"total":9},{"name":"复购损耗","n":0,"total":9}]
+};
+const OPPS = [{"id":1,"tp":"节点导视/入口指引","jn":"找得着","sys":"空间系统","loss":"流量损耗","state":"✗ 漏钱","why":"找不到入口就会放弃，商场店尤其严重。","impact":"找不到入口就会放弃，商场店尤其严重。直接拉低该经营段转化与口碑，是本次诊断的核心漏钱点。","fix":"主入口做明确地标与发光指引；商场店补关键节点导视。","img":true},{"id":2,"tp":"入口进入阻力","jn":"进得来","sys":"空间系统","loss":"转化损耗","state":"✗ 漏钱","why":"入口封闭、压迫，会在门口劝退顾客。","impact":"入口封闭、压迫，会在门口劝退顾客。直接拉低该经营段转化与口碑，是本次诊断的核心漏钱点。","fix":"门改开放通透式；消除进门心理压迫与障碍。","img":true},{"id":3,"tp":"等位区舒适度","jn":"等得住","sys":"空间系统","loss":"转化损耗","state":"✗ 漏钱","why":"等待难受，顾客直接走人，白白流失已到店客流。","impact":"等待难受，顾客直接走人，白白流失已到店客流。直接拉低该经营段转化与口碑，是本次诊断的核心漏钱点。","fix":"增设座椅、遮阳取暖；提供水/小吃降低等待痛苦。","img":true}];
+let HAS_REAL_DATA = false;
+let META = { who:'—', cat:'—', date:new Date().toISOString().slice(0,10), redTriggered:false, done:0, total:0, bad:0, warn:0 };
+// 只内联本地字体（同源可抓），避免 html-to-image 抓取 Google Fonts 远程 CSS 触发跨域 SecurityError
+const FONT_EMBED_CSS = `@font-face{font-family:'汇文明朝体';src:url('fonts/huiwenmincho-improved.woff2') format('woff2');font-display:swap;font-weight:400 900;}`;
+// === XHS_DATA_BLOCK_END ===
+
+// 数据加载：优先 window.__XHS_DATA__（导出脚本注入），其次 localStorage.xhs_data
+function loadXHSData(raw){
+  if(!raw) return false;
+  try{
+    const d = typeof raw==='string' ? JSON.parse(raw) : raw;
+    if(d.brand!==undefined) DATA.brand = d.brand;
+    if(d.score!==undefined) DATA.score = d.score;
+    if(d.opps!==undefined) DATA.opps = d.opps;
+    if(d.systems) SAMPLE.systems = d.systems;
+    if(d.journeys) SAMPLE.journeys = d.journeys;
+    if(d.losses) SAMPLE.losses = d.losses;
+    SAMPLE.score = DATA.score;
+    SAMPLE.level = DATA.score<60?'高危 · 需立即整改':(DATA.score<75?'偏弱 · 待提升':(DATA.score<90?'合格 · 可优化':'标杆店'));
+    SAMPLE.levelSub = '系统有 ' + DATA.opps + ' 个关键机会点未达标';
+    if(d.who!==undefined) META.who = d.who;
+    if(d.cat!==undefined) META.cat = d.cat;
+    if(d.date!==undefined) META.date = d.date;
+    if(d.redTriggered!==undefined) META.redTriggered = d.redTriggered;
+    if(d.done!==undefined) META.done = d.done;
+    if(d.total!==undefined) META.total = d.total;
+    if(d.bad!==undefined) META.bad = d.bad;
+    if(d.warn!==undefined) META.warn = d.warn;
+    if(d.issues){
+      const list = d.issues.map((o,idx)=>{
+        if(!o.impact) o.impact = `「${o.tp}」处理不当，会使${o.loss}持续发生，直接拉低「${o.jn}」阶段的转化效率与顾客口碑，是本次诊断必须优先止血的核心机会点。`;
+        return o;
+      });
+      OPPS.length = 0;
+      list.forEach(o=>OPPS.push(o));
+    }
+    HAS_REAL_DATA = true;
+    return true;
+  }catch(e){ console.error('xhs data load error', e); return false; }
+}
+
+if(typeof window !== 'undefined'){
+  if(window.__XHS_DATA__){ loadXHSData(window.__XHS_DATA__); }
+  else if(localStorage && localStorage.getItem('xhs_data')){ loadXHSData(localStorage.getItem('xhs_data')); }
+}
+
+function polar(scores, labels, w, h, pad){
+  const vals = labels.map(k=>scores[k]);
+  const n = labels.length, cx=w/2, cy=h/2;
+  const R = Math.min(cx,cy)-pad, angle0 = -Math.PI/2;
+  const pts = vals.map((v,i)=>{
+    const a = angle0 + i*2*Math.PI/n, r = R*(v/100);
+    return [cx+r*Math.cos(a), cy+r*Math.sin(a)];
+  });
+  const grid = [20,40,60,80,100].map(pct=>{
+    const r = R*(pct/100);
+    const d = Array.from({length:n},(_,i)=>{
+      const a = angle0 + i*2*Math.PI/n;
+      return (i?'L':'M') + (cx+r*Math.cos(a))+','+(cy+r*Math.sin(a));
+    }).join(' ')+' Z';
+    return `<path d="${d}" fill="none" stroke="rgba(43,41,38,.14)" stroke-width="1"/>`;
+  }).join('');
+  const axes = pts.map((_,i)=>{
+    const a = angle0 + i*2*Math.PI/n;
+    const x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
+    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(43,41,38,.14)" stroke-width="1"/>`;
+  }).join('');
+  const area = `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="rgba(168,82,74,.18)" stroke="#A8524A" stroke-width="2.5"/>`;
+  const dots = pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="#A8524A"/>`).join('');
+  const benchPts = Array.from({length:n},(_,i)=>{
+    const a = angle0 + i*2*Math.PI/n, r = R*0.8;
+    return [cx+r*Math.cos(a), cy+r*Math.sin(a)];
+  });
+  const bench = `<polygon points="${benchPts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="rgba(43,41,38,.35)" stroke-width="2" stroke-dasharray="8 6"/>`;
+  const labs = labels.map((k,i)=>{
+    const a = angle0 + i*2*Math.PI/n, r = R+22;
+    const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
+    const anchor = Math.abs(Math.cos(a))<.3?'middle':(Math.cos(a)>0?'start':'end');
+    const dy = Math.abs(Math.sin(a))<.3?5:0;
+    return `<text x="${x}" y="${y+dy}" text-anchor="${anchor}" fill="rgba(43,41,38,.7)" font-size="14" font-weight="500">${k}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${grid}${axes}${bench}${area}${dots}${labs}</svg>`;
+}
+
+function renderCover(){
+  return `<div class="page"><div class="pg p-cover">
+    <div class="pg-hd"><div class="left"><div class="title">STDM · 门店经营触点诊断</div><div class="sub">STORE TOUCHPOINT DIAGNOSTIC MAP</div></div><div class="mark"></div></div>
+    <div class="rule"></div>
+    <div class="pg-bd">
+      <div class="brand-block">
+        <div class="brand">${DATA.brand}</div>
+        <div class="subtitle">探店经营报告</div>
+      </div>
+      <div class="sk7"></div>
+      <div class="ops-block">
+        <div class="ops-bar"><span class="n">${DATA.opps}</span>个机会点正在漏钱，急需改善！</div>
+      </div>
+      <div class="sk-x"></div>
+      <div class="score-row">
+        <div class="score">${DATA.score}</div>
+        <div class="score-label">门店健康分</div>
+      </div>
+      <div class="sk5"></div>
+      <div class="disclaimer">※ 本报告基于单次实地到店诊断，结论仅代表该门店当次经营表现，不代表品牌整体及旗下其他门店水平。<br><span class="demo-tag">【演示】本案例基于公开网络资料模拟生成，非真实到店 SI 诊断，仅用于流程演示。</span></div>
+    </div>
+    <div class="pg-ft">
+      <div class="sig"><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
+      <div class="no">01 / 06</div>
+    </div>
+  </div></div>`;
+}
+
+function renderConclusion(){
+  const sysSvg = polar(SAMPLE.systems, ['品牌','产品','空间','服务','运营','关系','信任'], 430, 380, 34);
+  const jnySvg = polar(SAMPLE.journeys, ['看得见','找得着','等得住','进得来','吃得好','会再来'], 430, 380, 34);
+  const lossBars = SAMPLE.losses.map(l=>{
+    const pct = (l.n/l.total*100).toFixed(0);
+    return `<div class="item"><div class="name">${l.name}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="count">${l.n}/${l.total}</div></div>`;
+  }).join('');
+  return `<div class="page"><div class="pg p-con">
+    <div class="pg-hd"><div class="left"><div class="title">诊断结论</div><div class="sub">DIAGNOSTIC CONCLUSION</div></div><div class="mark"></div></div>
+    <div class="rule"></div>
+    <div class="pg-bd">
+      <div class="scorebar">
+        <div class="score-main">
+          <div class="big">${SAMPLE.score}</div>
+          <div class="tag">${SAMPLE.level}</div>
+          <div class="sub">${SAMPLE.levelSub}</div>
+        </div>
+        <div class="kpi">
+          <div class="k"><div class="t">机会点</div><div class="v">${DATA.opps}</div><div class="u">个待优化项</div></div>
+          <div class="k"><div class="t">经营系统</div><div class="v">7</div><div class="u">大维度扫描</div></div>
+          <div class="k"><div class="t">顾客旅程</div><div class="v">6</div><div class="u">段漏斗诊断</div></div>
+        </div>
+      </div>
+      <div class="charts">
+        <div class="chart"><div class="ct">七大经营系统</div><div class="ce">SYSTEM HEALTH · 虚线 = 行业基准 80</div>${sysSvg}</div>
+        <div class="chart"><div class="ct">六段顾客旅程</div><div class="ce">JOURNEY HEALTH · 虚线 = 行业基准 80</div>${jnySvg}</div>
+      </div>
+      <div class="losses"><div class="lh">核心损耗排行　/ <b>TOP LOSSES</b></div>${lossBars}</div>
+    </div>
+    <div class="pg-ft">
+      <div class="sig"><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
+      <div class="no">02 / ${2+OPPS.length+1}</div>
+    </div>
+  </div></div>`;
+}
+
+function renderDetail(o,i,total){
+  return `<div class="page"><div class="pg p-detail">
+    <div class="pg-hd"><div class="left"><div class="title">机会点 0${i+1}</div><div class="sub">OPPORTUNITY POINT · ${o.state}</div></div><div class="mark"></div></div>
+    <div class="rule"></div>
+    <div class="pg-bd">
+      <div class="tp-row">
+        <div class="tp-name">${o.tp}</div>
+        <div class="tp-meta">
+          <div class="chip">${o.jn}</div>
+          <div class="chip">${o.sys}</div>
+          <div class="chip red">${o.loss}</div>
+        </div>
+      </div>
+      <div class="why-block">
+        <div class="st">问题本质　· WHY</div>
+        <div class="sb">${o.why}</div>
+      </div>
+      <div class="photo">${o.photo ? `<img src="${o.photo}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">` : '门店实拍图位 · 示意（待杨老师到店实拍）'}</div>
+      <div class="impact-fix">
+        <div class="col">
+          <div class="sec">
+            <div class="st">经营影响　· <b>IMPACT</b></div>
+            <div class="sb">${o.impact}</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="sec">
+            <div class="st">整改方向　· <b>FIX</b></div>
+            <div class="sb">${o.fix}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pg-ft">
+      <div class="sig"><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
+      <div class="no">${i+3} / ${2+total+1}</div>
+    </div>
+  </div></div>`;
+}
+
+function renderAbout(total){
+  const j = ['看得见','找得着','等得住','进得来','吃得好','会再来'];
+  const je = ['SEE','FIND','WAIT','ENTER','EAT','RETURN'];
+  const s = [
+    {n:'远观站',e:'10米外判断吸引力'},
+    {n:'近门站',e:'3秒内读懂品类'},
+    {n:'等位站',e:'排队体验决定是否离开'},
+    {n:'入店站',e:'迎宾+首因体验'},
+    {n:'餐桌站',e:'产品+空间+服务'},
+    {n:'离店站',e:'收尾体验+复购钩子'},
+    {n:'线上站',e:'评价/外卖/私域触点'}
+  ];
+  return `<div class="page"><div class="pg p-about">
+    <div class="pg-hd"><div class="left"><div class="title">关于 STDM</div><div class="sub">STORE TOUCHPOINT DIAGNOSTIC MAP</div></div><div class="mark"></div></div>
+    <div class="rule"></div>
+    <div class="pg-bd">
+      <div class="lead">STDM 不是一张巡店表，而是一套<span class="red">顾客旅程视角</span>的诊断地图。<br>从<span class="red">看得见</span>到<span class="red">会再来</span>，找到每一步里真正漏钱的地方。</div>
+      <div>
+        <div class="section-title">十列诊断坐标轴</div>
+        <div class="section-sub">DIAGNOSTIC AXES</div>
+        <div class="axis-list">
+          <div class="a">顾客旅程</div><div class="a">经营目标</div><div class="a">经营系统</div><div class="a">经营触点</div><div class="a">顾客心理</div>
+          <div class="a">检查动作</div><div class="a">合格标准</div><div class="a">流失原因</div><div class="a">经营影响</div><div class="a">整改方向</div>
+        </div>
+      </div>
+      <div class="journey">${j.map((x,i)=>`<div class="j"><div>${x}</div><div class="e">${je[i]}</div></div>${i<j.length-1?'<div class="arr">→</div>':''}`).join('')}</div>
+      <div>
+        <div class="section-title">七个执行站位</div>
+        <div class="section-sub">SEVEN STATIONS</div>
+        <div class="stations">${s.map(x=>`<div class="s"><div class="n">${x.n}</div><div class="e">${x.e}</div></div>`).join('')}</div>
+      </div>
+      <div class="quote">诊断的核心价值，不是打分，而是让经营者清楚地知道：顾客每走一步，门店在哪个触点漏掉了流量、信任、转化、体验与复购。</div>
+      <div class="cta">
+        <div><div class="t">你的门店，正在哪里漏钱？</div><div class="u">关注「位道策划」，用 STDM 找答案</div></div>
+        <div class="h">位道策划 · 杨首位</div>
+      </div>
+    </div>
+    <div class="pg-ft">
+      <div class="sig"><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
+      <div class="no">${total} / ${total}</div>
+    </div>
+  </div></div>`;
+}
+
+const total = 2 + OPPS.length + 1;
+let html = renderCover() + renderConclusion();
+OPPS.forEach((o,i)=>html += renderDetail(o,i,OPPS.length));
+html += renderAbout(total);
+document.getElementById('stage').innerHTML = html;
+
+// 未注入真实数据时显示提示；拖拽 JSON 可加载真实数据
+if(typeof window !== 'undefined' && !HAS_REAL_DATA){
+  const fb = document.getElementById('fallback');
+  if(fb) fb.style.display = 'flex';
+}
+function applyFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { if(loadXHSData(e.target.result)){ location.reload(); } else { alert('JSON 格式错误，无法加载。'); } };
+  reader.readAsText(file);
+}
+if(typeof window !== 'undefined'){
+  const fi = document.getElementById('fileInput');
+  if(fi) fi.addEventListener('change', e => applyFile(e.target.files[0]));
+  window.addEventListener('dragover', e => { e.preventDefault(); });
+  window.addEventListener('drop', e => {
+    e.preventDefault();
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if(files && files.length) applyFile(files[0]);
+  });
+}
+function downloadJSON(){
+  const d = (typeof window !== 'undefined' && window.__XHS_DATA__) ? window.__XHS_DATA__ : (typeof DATA !== 'undefined' ? DATA : null);
+  if(!d) return alert('暂无数据');
+  const blob = new Blob([JSON.stringify(d,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='xhs_stdm_data.json'; a.click();
+}
+
+// 准备舞台：临时取消缩放并锁定 1080×1440，返回还原函数
+function prepStage(){
+  const stage = document.querySelector('.stage');
+  const pages = document.querySelectorAll('.page');
+  const orig = { zoom: stage.style.zoom, display: stage.style.display, alignItems: stage.style.alignItems, padding: stage.style.padding, gap: stage.style.gap };
+  stage.style.zoom = '1'; stage.style.display = 'block'; stage.style.alignItems = 'stretch';
+  stage.style.padding = '0'; stage.style.gap = '0';
+  const pageOrig = [];
+  pages.forEach(p=>{
+    pageOrig.push({ el:p, w:p.style.width, h:p.style.height, mh:p.style.minHeight, m:p.style.margin, bs:p.style.boxShadow, of:p.style.overflow });
+    p.style.width='1080px'; p.style.height='1440px'; p.style.minHeight='1440px';
+    p.style.margin='0'; p.style.boxShadow='none'; p.style.overflow='hidden';
+  });
+  return ()=>{
+    Object.keys(orig).forEach(k=>stage.style[k]=orig[k]||'');
+    pageOrig.forEach(o=>{ o.el.style.width=o.w||''; o.el.style.height=o.h||''; o.el.style.minHeight=o.mh||''; o.el.style.margin=o.m||''; o.el.style.boxShadow=o.bs||''; o.el.style.overflow=o.of||''; });
+  };
+}
+
+async function capturePages(){
+  if(typeof htmlToImage === 'undefined') throw new Error('图片生成库未加载，请检查网络；或改用本地 node export_xhs.js。');
+  const pages = document.querySelectorAll('.page');
+  if(!pages.length) throw new Error('未找到可导出的页面');
+  const restore = prepStage();
+  await document.fonts.ready;
+  await new Promise(r=>setTimeout(r,300));
+  const out = [];
+  for(let i=0;i<pages.length;i++){
+    const dataUrl = await htmlToImage.toPng(pages[i], { pixelRatio:2, width:1080, height:1440, backgroundColor:'#F2EEE4', fontEmbedCSS: FONT_EMBED_CSS });
+    out.push(dataUrl);
+  }
+  restore();
+  return out;
+}
+
+function triggerDownload(blob, filename){
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+}
+
+async function downloadAllImages(){
+  const btn = document.querySelector('#toolbar .tb-btn[onclick="downloadAllImages()"]');
+  const status = document.getElementById('tb-status');
+  if(btn) btn.disabled = true;
+  status.textContent = '正在生成图片…';
+  try{
+    const urls = await capturePages();
+    const zip = new JSZip();
+    const brand = (DATA.brand||'stdm').replace(/[\\/:*?"<>|]/g,'_');
+    urls.forEach((u,i)=>{
+      const b64 = u.split(',')[1];
+      zip.file('xhs_' + String(i+1).padStart(2,'0') + '.png', b64, { base64:true });
+    });
+    const blob = await zip.generateAsync({ type:'blob' });
+    triggerDownload(blob, 'xhs_stdm_' + brand + '.zip');
+    status.textContent = '图片已打包下载（' + urls.length + ' 张）';
+  }catch(e){
+    console.error(e); status.textContent = '生成失败';
+    alert('图片生成失败：' + e.message);
+  }
+  if(btn) btn.disabled = false;
+}
+
+// ===== 诊断报告长图（PDF） =====
+function buildReportLongHTML(){
+  const brand = DATA.brand || '—';
+  const level = SAMPLE.level;
+  const sysRows = Object.keys(SAMPLE.systems).map(k=>{
+    const v = SAMPLE.systems[k];
+    return `<div class="row"><div class="nm">${k}</div><div class="track"><i style="width:${v}%"></i></div><div class="vl">${v}</div></div>`;
+  }).join('');
+  const jnyRows = Object.keys(SAMPLE.journeys).map(k=>{
+    const v = SAMPLE.journeys[k];
+    return `<div class="row"><div class="nm">${k}</div><div class="track"><i style="width:${v}%"></i></div><div class="vl">${v}</div></div>`;
+  }).join('');
+  const lossCards = SAMPLE.losses.map(l=>`<div class="c"><div class="n">${l.n}</div><div class="l">${l.name}</div></div>`).join('');
+  const oppsHTML = OPPS.map((o,i)=>{
+    const ph = o.photo ? `<div class="ph"><img src="${o.photo}" alt=""></div>` : `<div class="ph">门店实拍图位 · 示意（待杨老师到店实拍）</div>`;
+    return `<div class="rl-opp">
+      <div class="oh"><div class="on">机会点 ${String(i+1).padStart(2,'0')}　${o.tp}</div><div class="os">${o.state}</div></div>
+      <div class="chips"><span>${o.jn}</span><span>${o.sys}</span><span class="red">${o.loss}</span></div>
+      <div class="blk"><div class="lt">问题本质 · WHY</div><div class="bd">${o.why}</div></div>
+      <div class="blk"><div class="lt">经营影响 · IMPACT</div><div class="bd">${o.impact}</div></div>
+      <div class="blk"><div class="lt">整改方向 · FIX</div><div class="bd">${o.fix}</div></div>
+      ${ph}
+    </div>`;
+  }).join('');
+  const redNote = META.redTriggered ? `<div class="rl-disc" style="color:var(--red);border-color:var(--red);">⚠ 检测到食安红线问题，门店健康分已封顶 60 分，须立即整改。</div>` : '';
+  return `<div class="report-long" id="reportLongEl">
+    <div class="rl-hd">
+      <div><div class="b">${brand}</div><div class="t">探店经营诊断报告</div></div>
+      <div style="text-align:right;font-size:18px;color:var(--ink60);font-family:var(--sans);">STDM · 门店经营触点诊断地图</div>
+    </div>
+    <div class="rl-meta">
+      <div>诊断人：<b>${META.who}</b></div>
+      <div>品类：<b>${META.cat}</b></div>
+      <div>日期：<b>${META.date}</b></div>
+      <div>评分项：<b>${META.done}/${META.total}</b>（漏钱 ${META.bad} · 预警 ${META.warn}）</div>
+    </div>
+    <div class="rl-score">
+      <div class="n">${DATA.score}</div>
+      <div class="lab">门店健康分</div>
+      <div class="lv">${level} · 共 ${DATA.opps} 个机会点</div>
+    </div>
+    <div class="rl-sec-t">七大经营系统</div>
+    <div class="rl-bars">${sysRows}</div>
+    <div class="rl-sec-t">六段顾客旅程</div>
+    <div class="rl-bars">${jnyRows}</div>
+    <div class="rl-sec-t">核心损耗分布</div>
+    <div class="rl-loss">${lossCards}</div>
+    ${redNote}
+    <div class="rl-sec-t">机会点明细与整改方向</div>
+    ${oppsHTML}
+    <div class="rl-disc">※ 本报告基于单次实地到店诊断，结论仅代表该门店当次经营表现，不代表品牌整体及旗下其他门店水平。${HAS_REAL_DATA?'':'【演示】本案例基于公开网络资料模拟生成，非真实到店 SI 诊断，仅用于流程演示。'}</div>
+    <div class="rl-ft">
+      <div><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
+      <div class="r">STDM v${'2.6.21'}</div>
+    </div>
+  </div>`;
+}
+
+async function generateReportPDF(){
+  const btn = document.querySelector('#toolbar .tb-btn[onclick="generateReportPDF()"]');
+  const status = document.getElementById('tb-status');
+  if(btn) btn.disabled = true;
+  status.textContent = '正在生成报告 PDF…';
+  try{
+    if(typeof htmlToImage === 'undefined' || typeof JSZip === 'undefined' || typeof window.jspdf === 'undefined'){
+      throw new Error('生成库未加载，请检查网络；或改用本地 node export_xhs.js。');
+    }
+    const wrap = document.createElement('div');
+    wrap.innerHTML = buildReportLongHTML();
+    const el = wrap.firstElementChild;
+    document.body.appendChild(el);
+    await document.fonts.ready;
+    await new Promise(r=>setTimeout(r,300));
+    const h = el.scrollHeight;
+    const dataUrl = await htmlToImage.toJpeg(el, { pixelRatio:2, quality:0.92, width:1080, backgroundColor:'#F2EEE4', fontEmbedCSS: FONT_EMBED_CSS });
+    el.remove();
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'p', unit:'px', format:[1080, h] });
+    pdf.addImage(dataUrl, 'JPEG', 0, 0, 1080, h);
+    const brand = (DATA.brand||'stdm').replace(/[\\/:*?"<>|]/g,'_');
+    pdf.save('stdm_report_' + brand + '.pdf');
+    status.textContent = '报告 PDF 已下载';
+  }catch(e){
+    console.error(e); status.textContent = '生成失败';
+    alert('报告 PDF 生成失败：' + e.message);
+  }
+  if(btn) btn.disabled = false;
+}
+
+// 打开后自动生成（小红书分图 ZIP + 报告 PDF）
+let _autoDone = false;
+async function initExport(){
+  if(!HAS_REAL_DATA || _autoDone) return;
+  _autoDone = true;
+  const status = document.getElementById('tb-status');
+  status.textContent = '正在生成图片与报告…';
+  try{
+    const urls = await capturePages();
+    const zip = new JSZip();
+    const brand = (DATA.brand||'stdm').replace(/[\\/:*?"<>|]/g,'_');
+    urls.forEach((u,i)=> zip.file('xhs_' + String(i+1).padStart(2,'0') + '.png', u.split(',')[1], { base64:true }));
+    triggerDownload(await zip.generateAsync({ type:'blob' }), 'xhs_stdm_' + brand + '.zip');
+    status.textContent = '图片已下载，正在生成报告…';
+    await generateReportPDF();
+  }catch(e){
+    console.error(e);
+    status.textContent = '自动生成失败，请手动点击按钮';
+  }
+}
+if(typeof window !== 'undefined'){
+  if(document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(initExport, 400);
+  else window.addEventListener('DOMContentLoaded', ()=>setTimeout(initExport, 400));
+}
+</script>
+</body>
+</html>

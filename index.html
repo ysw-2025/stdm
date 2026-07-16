@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>门店经营触点诊断地图 STDM 2.6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#E60012; --amber:#E8850C; --green:#159A5B; --blue:#0B6BB5;
+    --ink:#141414; --ink2:#4a4a4a; --gray:#8a8a8a; --mut:#9a9a9a; --line:#e8e8e8; --line2:#f0f0f0;
+    --bg:#ffffff; --panel:#fafafa; --chip:#f2f2f2; --radius:2px;
+    /* 字体令牌：与小红书出图统一（评分→报告→出图 同套字体角色） */
+    --title:"汇文明朝体","方正粗圆宋简体","思源宋体",serif;
+    --serif:"思源宋体","思源黑体",sans-serif;
+    --sans:"方正粗圆宋简体","思源黑体",sans-serif;
+  }
+  .score-level{display:inline-block;font-size:12px;font-weight:700;padding:3px 12px;border-radius:2px;margin-top:10px;letter-spacing:.05em;}
+  .score-level.ok{background:var(--green);color:#fff;}
+  .score-level.warn{background:var(--amber);color:#fff;}
+  .score-level.bad{background:var(--red);color:#fff;}
+  .red-alert{display:none;margin-top:12px;background:var(--red);color:#fff;font-size:12px;font-weight:700;padding:9px 13px;border-radius:2px;}
+  .rep-redline .rep-h{color:var(--red);border-color:var(--red);}
+  .rep-redline-body{background:#fff0f0;border:1px solid var(--red);border-left:4px solid var(--red);padding:13px 15px;font-size:13px;line-height:1.8;color:#7a1010;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  html,body{background:var(--bg);color:var(--ink);
+    font-family:var(--serif);font-size:14px;line-height:1.6;
+
+  .masthead{border-bottom:3px solid var(--ink);padding:32px 40px 24px;max-width:1320px;margin:0 auto;}
+  .brandline{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  .redmark{width:14px;height:14px;background:var(--red);display:inline-block;border-radius:1px;}
+  .title{font-size:29px;font-weight:800;letter-spacing:-.5px;}
+  .ver{font-size:12px;font-weight:800;color:#fff;background:var(--red);padding:3px 9px;border-radius:2px;letter-spacing:.04em;align-self:center;}
+  .en{font-size:12px;letter-spacing:3px;color:var(--gray);text-transform:uppercase;font-weight:600;}
+  .subtitle{margin-top:11px;font-size:13.5px;color:var(--ink2);max-width:780px;}
+  .subtitle b{color:var(--red);font-weight:700;}
+
+  .storebar{max-width:1320px;margin:0 auto;padding:15px 40px;display:flex;gap:24px;flex-wrap:wrap;}
+  .info-remind{flex-basis:100%;background:#fff4f4;border:1px solid var(--red);color:var(--red);font-size:12.5px;line-height:1.6;padding:9px 12px;border-radius:2px;margin-top:2px;}
+  .storebar.warn{outline:2px solid var(--red);outline-offset:-2px;}
+    border-bottom:1px solid var(--line);align-items:center;}
+  .field{display:flex;align-items:center;gap:8px;}
+  .field label{font-size:12px;color:var(--gray);font-weight:600;letter-spacing:1px;}
+  .field input{border:none;border-bottom:1px solid var(--line);padding:4px 2px;font-size:14px;color:var(--ink);min-width:110px;font-family:inherit;background:transparent;}
+  .field input:focus{outline:none;border-bottom:1px solid var(--red);}
+
+  .wrap{max-width:1320px;margin:0 auto;padding:0 40px 80px;}
+
+  /* 仪表盘 */
+  .dash{display:grid;grid-template-columns:250px 1fr;border:1px solid var(--line);margin:26px 0 6px;}
+  .dash-left{border-right:1px solid var(--line);padding:24px 22px;background:var(--panel);}
+  .score-num{font-size:60px;font-weight:800;line-height:1;letter-spacing:-2px;}
+  .score-label{font-size:11px;letter-spacing:1.5px;color:var(--gray);font-weight:700;text-transform:uppercase;margin-top:6px;}
+  .leak-row{display:flex;gap:18px;margin-top:22px;padding-top:20px;border-top:1px solid var(--line);}
+  .leak-item .v{font-size:32px;font-weight:800;line-height:1;}
+  .leak-item .v.r{color:var(--red);} .leak-item .v.a{color:var(--amber);}
+  .leak-item .c{font-size:11px;color:var(--ink2);font-weight:600;margin-top:3px;}
+  .prog{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--gray);}
+  .prog b{color:var(--ink);font-size:15px;}
+  .missing{color:var(--amber);margin-left:8px;}
+  .missing b{color:var(--amber);font-size:15px;}
+
+  .dash-right{padding:22px 24px;display:grid;grid-template-columns:1fr 1fr;gap:22px 34px;}
+  .panel-h{font-size:11px;letter-spacing:1.5px;color:var(--gray);font-weight:700;text-transform:uppercase;margin-bottom:13px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .bar-name{width:78px;font-size:12px;font-weight:600;flex-shrink:0;}
+  .bar-track{flex:1;height:8px;background:#ededed;border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;transition:width .3s;}
+  .bar-pct{width:34px;text-align:right;font-size:11px;color:var(--ink2);font-weight:700;}
+  .loss-grid{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:18px;display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+  .loss-cell{text-align:center;padding:11px 6px;background:var(--panel);border-radius:2px;cursor:pointer;transition:transform .1s,background .2s;}
+  .loss-cell:hover{background:#f0f0f0;transform:translateY(-1px);}
+  .loss-cell.active{background:var(--ink);color:#fff;}
+  .loss-cell.active .loss-t{color:#fff;}
+  .loss-v{font-size:25px;font-weight:800;color:var(--red);line-height:1;}
+  .loss-v.zero{color:var(--green);}
+  .loss-cell.active .loss-v.zero{color:#ffdada;}
+  .loss-t{font-size:11px;color:var(--ink2);margin-top:5px;font-weight:600;}
+  .fixfilter{display:none;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--ink);color:#fff;font-size:12.5px;margin-bottom:10px;}
+  .fixfilter.show{display:flex;}
+  .fixfilter a{color:var(--red);text-decoration:underline;cursor:pointer;}
+
+  /* 工具条 */
+  .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:20px 0 6px;}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;}
+  .fbtn{border:1px solid var(--line);background:#fff;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;border-radius:2px;color:var(--ink2);font-family:inherit;transition:.15s;}
+  .fbtn:hover{border-color:var(--ink);}
+  .fbtn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .fbtn .n{opacity:.6;margin-left:4px;font-weight:700;}
+  .spacer{flex:1;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .action-btn{border:1px solid var(--ink);background:#fff;padding:7px 15px;font-size:12px;font-weight:700;cursor:pointer;border-radius:2px;letter-spacing:.5px;font-family:inherit;}
+  .action-btn:hover{background:var(--ink);color:#fff;}
+  .action-btn.reset{border-color:var(--line);color:var(--gray);}
+  .action-btn.reset:hover{background:#fff;color:var(--red);border-color:var(--red);}
+
+  /* 站位导航 */
+  .stagenav{display:flex;border:1px solid var(--line);margin:10px 0 4px;overflow:hidden;border-radius:2px;flex-wrap:wrap;}
+  .stagenav a{flex:1;min-width:100px;text-align:center;padding:11px 4px;font-size:13px;font-weight:700;color:var(--ink2);border-right:1px solid var(--line);transition:.15s;text-decoration:none;}
+  .stagenav a:last-child{border-right:none;}
+  .stagenav a:hover{background:var(--panel);}
+  .stagenav a .idx{color:var(--red);margin-right:5px;}
+  .stagenav a .en2{display:block;font-size:9px;letter-spacing:1px;color:var(--gray);font-weight:600;margin-top:2px;}
+
+  /* 站位区块 */
+  .station{margin-top:34px;scroll-margin-top:12px;}
+  .station-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:10px;flex-wrap:wrap;}
+  .station-idx{font-size:32px;font-weight:800;color:var(--red);line-height:.9;}
+  .station-name{font-size:21px;font-weight:800;}
+  .station-where{font-size:12.5px;color:var(--ink2);background:var(--panel);border:1px solid var(--line);padding:5px 12px;border-radius:2px;}
+  .station-where b{color:var(--red);font-weight:700;}
+  .station-prog{margin-left:auto;font-size:12px;color:var(--gray);font-weight:600;}
+
+  /* 触点卡 */
+  .tp{border:1px solid var(--line);border-left:3px solid var(--line);margin-top:14px;border-radius:2px;overflow:hidden;}
+  .tp.s-green{border-left-color:var(--green);} .tp.s-amber{border-left-color:var(--amber);} .tp.s-red{border-left-color:var(--red);}
+  .tp-top{display:flex;align-items:center;gap:10px;padding:13px 18px;background:var(--panel);flex-wrap:wrap;}
+  .tp-id{font-size:12px;font-weight:800;color:var(--gray);flex-shrink:0;}
+  .tp-name{font-size:16px;font-weight:800;}
+  .chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:2px;background:var(--chip);color:var(--ink2);white-space:nowrap;}
+  .chip.sys{background:#141414;color:#fff;}
+  .chip.loss{background:#fdeaec;color:var(--red);}
+.chip.wchip{background:var(--red);color:#fff;}
+
+  .tp-score{margin-left:auto;font-size:12px;font-weight:700;color:var(--ink2);white-space:nowrap;}
+
+  .why{font-size:12.5px;color:var(--ink2);background:#fafafa;border-bottom:1px solid var(--line2);padding:9px 18px;line-height:1.55;}
+  .why .tag{color:var(--gray);font-weight:700;}
+
+  /* 检查小项 */
+  .item{display:flex;gap:14px;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line2);}
+  .item:last-child{border-bottom:none;}
+  .item-main{flex:1;min-width:0;}
+  .item-name{font-size:13.5px;font-weight:700;margin-bottom:4px;}
+  .item-line{font-size:12.5px;color:var(--ink2);line-height:1.5;}
+  .item-line .k{font-weight:700;}
+  .k-act{color:var(--blue);} .k-std{color:var(--green);}
+  .item-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:7px;width:210px;}
+  .seg{display:flex;gap:5px;}
+  .sbtn{border:1px solid var(--line);background:#fff;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;border-radius:2px;color:var(--gray);font-family:inherit;transition:.12s;white-space:nowrap;}
+  .sbtn:hover{border-color:var(--ink2);}
+  .sbtn.on.ok{background:var(--green);color:#fff;border-color:var(--green);}
+  .sbtn.on.warn{background:var(--amber);color:#fff;border-color:var(--amber);}
+  .sbtn.on.bad{background:var(--red);color:#fff;border-color:var(--red);}
+  .note{width:210px;display:none;}
+  .note.show{display:block;}
+  .note textarea{width:100%;font-family:inherit;font-size:12.5px;color:var(--ink);border:1px solid var(--red);border-radius:2px;padding:6px 8px;resize:vertical;min-height:46px;background:#fffdfd;}
+  .note textarea:focus{outline:none;border-color:var(--red);}
+  .note .nh{font-size:11px;color:var(--red);font-weight:700;margin-bottom:3px;}
+
+  .hidden{display:none !important;}
+
+  .foot{max-width:1320px;margin:0 auto;padding:28px 40px;border-top:1px solid var(--line);font-size:12px;color:var(--gray);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .foot b{color:var(--ink2);}
+
+  @media(max-width:960px){
+    .masthead,.storebar,.wrap,.foot{padding-left:14px;padding-right:14px;}
+    .brandline{flex-wrap:wrap;gap:6px;}
+    .storebar{flex-wrap:wrap;gap:10px;}
+    .storebar .field{flex:1 1 45%;}
+    .dash{grid-template-columns:1fr;} .dash-left{border-right:none;border-bottom:1px solid var(--line);padding:18px;}
+    .dash-right{grid-template-columns:1fr;padding:18px;}
+    .loss-grid{grid-template-columns:repeat(3,1fr);gap:8px;}
+    .loss-v{font-size:20px;}
+    .item{flex-direction:column;} .item-right{width:100%;align-items:stretch;} .note,.note textarea{width:100%;}
+    .stagenav{display:flex;overflow-x:auto;white-space:nowrap;gap:6px;border-bottom:none;}
+    .stagenav a{flex:0 0 auto;padding:8px 14px;border:1px solid var(--line);border-bottom:1px solid var(--line);}
+    .logic-flow{gap:6px;}
+    .stage-pill{min-width:auto;padding:8px 4px;font-size:11px;}
+    .report-inner{padding:14px;}
+    .rep-radars{grid-template-columns:1fr;}
+    .rep-watch{grid-template-columns:1fr;}
+    .rep-hero{flex-direction:column;align-items:flex-start;gap:14px;}
+    .rep-gauge{flex:0 0 auto;align-self:center;}
+  }
+  @media(max-width:520px){
+    .sbtn{padding:8px 10px;font-size:12px;}
+    .loss-grid{grid-template-columns:repeat(2,1fr);}
+    .rep-kpis{gap:6px;}
+    .rep-hero-right{width:100%;}
+    .toolbar{gap:6px;}
+    .action-btn{padding:7px 10px;font-size:12px;}
+  }
+  @media print{
+    .toolbar,.stagenav,.action-btn,.seg{display:none;}
+    body{font-size:11px;} .tp{break-inside:avoid;} .dash{break-inside:avoid;}
+    .note{display:block !important;} .note textarea{border:1px solid #999;}
+  }
+  /* 底层逻辑横轴 */
+  .logicbar{margin:18px 0 6px;padding:16px 18px;background:#fff;border:1px solid var(--line);}
+  .logic-bar-h{font-size:12px;letter-spacing:.12em;color:var(--mut);text-transform:uppercase;margin-bottom:10px;}
+  .logic-bar-h b{color:var(--ink);}
+  .logic-flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
+  .stage-pill{flex:1 1 auto;min-width:120px;text-align:center;padding:9px 6px;border:1px solid var(--ink);font-size:13px;font-weight:700;}
+  .stage-pill .en{display:block;font-size:9px;font-weight:400;color:var(--mut);letter-spacing:.08em;margin-top:2px;}
+  .stage-pill .idx{color:var(--red);margin-right:3px;}
+  .stage-arrow{color:var(--mut);font-size:16px;font-weight:700;flex:0 0 auto;}
+  .logic-note{margin-top:11px;font-size:12px;color:var(--mut);line-height:1.8;border-top:1px dashed var(--line);padding-top:9px;}
+  .logic-note b{color:var(--ink);}
+  /* 站位旅程标签 */
+  .station-jn{font-size:11px;color:var(--red);border:1px solid var(--red);padding:2px 8px;margin-left:6px;font-weight:700;white-space:nowrap;}
+  .panel-h.mt{margin-top:14px;}
+  .jn-grid{display:flex;flex-direction:column;gap:7px;}
+  .jn-row{display:flex;align-items:center;gap:10px;font-size:12.5px;}
+  .jn-name{flex:0 0 92px;font-weight:700;}
+  .jn-name .idx{color:var(--red);}
+  .jn-bar{flex:1 1 auto;height:9px;background:var(--bg);position:relative;overflow:hidden;border:1px solid var(--line);}
+  .jn-bar>i{position:absolute;left:0;top:0;height:100%;background:var(--ink);}
+  .jn-bar>i.r{background:var(--red);}
+  .jn-pct{flex:0 0 78px;text-align:right;color:var(--mut);}
+  /* 整改方向（卡片内） */
+  .fix{margin-top:8px;padding:8px 10px;background:#fafafa;border-left:3px solid var(--ink);font-size:12.5px;line-height:1.7;}
+  .fix .tag{color:var(--ink);font-weight:700;}
+  .tp.s-red .fix{border-left-color:var(--red);background:#fff6f6;}
+  .tp.s-amber .fix{border-left-color:var(--amber);background:#fffaf0;}
+  .k-fix{color:var(--ink);font-weight:700;}
+  /* 整改清单 / 诊断结论 */
+  .fixlist-sec{margin:22px 0 6px;}
+  .fix-row{border:1px solid var(--line);margin-bottom:10px;background:#fff;}
+  .fix-row.bad{border-left:4px solid var(--red);}
+  .fix-row.warn{border-left:4px solid var(--amber);}
+  .fr-top{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fafafa;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .fr-tp{font-weight:700;font-size:14px;}
+  .fr-flag{margin-left:auto;font-weight:700;}
+  .fix-row.bad .fr-flag{color:var(--red);}
+  .fix-row.warn .fr-flag{color:var(--amber);}
+  .fr-body{padding:9px 12px;}
+  .fr-line{font-size:13px;line-height:1.8;margin-bottom:6px;}
+  .fr-line:last-child{margin-bottom:0;}
+  .fixlist-sec .empty{padding:14px;border:1px dashed var(--line);text-align:center;color:var(--mut);}
+  .demobanner{display:none;margin:14px 0 0;padding:9px 14px;background:var(--ink);color:#fff;font-size:12.5px;}
+  /* 拍照上传 */
+  .picbox{margin-top:8px;display:flex;align-items:flex-start;gap:10px;}
+  .pic-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--ink2);border:1px dashed var(--line);padding:5px 10px;cursor:pointer;background:#fff;}
+  .pic-btn input{display:none;}
+  .pic-thumb{width:120px;height:90px;object-fit:cover;border:1px solid var(--line);border-radius:2px;display:block;cursor:zoom-in;flex:0 0 auto;}
+  .pic-wrap{position:relative;display:inline-block;flex:0 0 auto;}
+  .pic-del{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.62);color:#fff;border:none;border-radius:2px;font-size:11px;padding:2px 7px;cursor:pointer;line-height:1.5;z-index:2;}
+  .pic-del:hover{background:var(--red);}
+  /* 诊断报告视图（咨询交付物质感） */
+  .report-view{display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:#fff;z-index:1000;overflow:auto;}
+  .report-inner{max-width:820px;margin:0 auto;padding:0 26px 70px;}
+  .report-head{position:sticky;top:0;background:#fff;border-bottom:2px solid var(--ink);padding:18px 0 13px;display:flex;align-items:flex-end;justify-content:space-between;gap:14px;z-index:10;}
+  .report-brand{font-size:10px;letter-spacing:.3em;color:var(--red);font-weight:700;}
+  .report-head h2{margin:5px 0 0;font-size:21px;letter-spacing:.02em;}
+  .report-head .meta{font-size:12px;color:var(--mut);margin-top:5px;}
+  .report-close{font-size:12px;padding:7px 14px;background:#fff;border:1px solid var(--ink);cursor:pointer;}
+  .report-close.primary{background:var(--ink);color:#fff;}
+  /* hero 战略层 */
+  .rep-hero{display:flex;gap:26px;align-items:center;padding:26px 0 18px;border-bottom:1px solid var(--line);}
+  .rep-gauge{flex:0 0 196px;}
+  .rep-hero-right{flex:1;min-width:0;}
+  .rep-kpis{display:flex;gap:10px;margin-bottom:14px;}
+  .rep-kpi{flex:1;border:1px solid var(--line);padding:11px 6px;text-align:center;}
+  .rep-kpi .v{font-size:25px;font-weight:800;line-height:1;}
+  .rep-kpi .v.red{color:var(--red);} .rep-kpi .v.amber{color:var(--amber);} .rep-kpi .v.ok{color:var(--ink);}
+  .rep-kpi .l{font-size:11px;color:var(--mut);margin-top:6px;}
+  .rep-conclusion{background:var(--panel);border-left:4px solid var(--red);padding:14px 16px;font-size:14.5px;line-height:1.85;}
+  .rep-conclusion b{color:var(--red);}
+  /* 分析层 section */
+  .rep-section{margin-top:30px;}
+  .rep-h{font-size:12px;letter-spacing:.22em;color:var(--mut);text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:16px;}
+  .rep-h b{color:var(--ink);font-size:14px;letter-spacing:0;}
+  /* 双雷达 */
+  .rep-radars{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  .rep-radar{border:1px solid var(--line);padding:16px 8px 12px;text-align:center;}
+  .rep-radar h4{margin:0 0 3px;font-size:14px;}
+  .rep-radar .sub{font-size:11px;color:var(--mut);margin-bottom:4px;}
+  .rep-legend{display:flex;justify-content:center;gap:18px;font-size:11px;color:var(--ink2);margin-top:6px;}
+  .rep-legend i{display:inline-block;width:16px;height:0;border-top:2px solid var(--red);vertical-align:middle;margin-right:5px;}
+  .rep-legend i.b{display:inline-block;width:16px;height:0;border-top:1.5px dashed #999;vertical-align:middle;margin-right:5px;}
+  .rep-bench-note{font-size:11.5px;color:var(--mut);line-height:1.75;margin-top:16px;background:var(--panel);padding:11px 13px;}
+  .rep-bench-note b{color:var(--ink);}
+  /* 损耗排行条 */
+  .rep-loss{display:flex;align-items:center;gap:12px;margin-bottom:13px;}
+  .rep-loss .ln{width:78px;font-size:13px;flex:0 0 78px;}
+  .rep-loss .lt{flex:1;height:15px;background:#f2f2f2;}
+  .rep-loss .lf{display:block;height:100%;background:var(--red);}
+  .rep-loss .lv{font-size:13px;font-weight:700;color:var(--red);width:48px;text-align:right;flex:0 0 48px;}
+  /* 最薄弱模块 */
+  .rep-watch{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .rep-wcard{border:1px solid var(--line);padding:13px 14px;}
+  .rep-wcard .wt{font-size:13px;font-weight:700;}
+  .rep-wcard .ws{font-size:27px;font-weight:800;color:var(--red);line-height:1.1;margin-top:7px;}
+  .rep-wcard .ws.ok{color:var(--ink);}
+  .rep-wcard .wd{font-size:11px;color:var(--mut);margin-top:4px;}
+  /* 明细清单 */
+  .rep-list{margin-top:4px;}
+  .rep-item{border:1px solid var(--line);margin-bottom:12px;break-inside:avoid;}
+  .rep-item .fr-top{background:var(--panel);}
+  .rep-thumb{width:180px;height:120px;object-fit:cover;margin-top:8px;border:1px solid var(--line);border-radius:2px;display:block;cursor:zoom-in;}
+  .imgzoom{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;align-items:center;justify-content:center;cursor:zoom-out;}
+  .imgzoom.show{display:flex;}
+  .imgzoom img{max-width:92vw;max-height:92vh;border:3px solid #fff;}
+  .rep-foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;color:var(--mut);text-align:center;letter-spacing:.05em;}
+  body.report-open{overflow:hidden;}
+  @media print{
+    .rep-item,.rep-hero,.rep-section,.rep-radar,.rep-wcard{break-inside:avoid;}
+    .rep-section{page-break-inside:avoid;}
+  }
+  @media print{
+    .report-view{position:static;display:block !important;overflow:visible;}
+    .report-head .report-close{display:none;}
+    .landing,.guide-screen,.masthead,.storebar,.dash,.toolbar,.stagenav,#stations,.fixlist-sec,.foot,.demobanner{display:none !important;}
+    body{overflow:visible;}
+  }
+
+  /* ===== 首屏 Landing ===== */
+  .landing{position:fixed;inset:0;background:#fff;z-index:5000;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  .landing-inner{max-width:520px;}
+  .landing-brand{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .landing-mark{width:14px;height:14px;background:var(--red);border-radius:1px;}
+  .landing-title{font-size:28px;font-weight:800;letter-spacing:-.5px;}
+  .landing-subtitle{font-size:12px;letter-spacing:4px;color:var(--gray);text-transform:uppercase;font-weight:600;margin-bottom:34px;}
+  .landing-claim{font-size:34px;font-weight:800;letter-spacing:-1px;margin-bottom:16px;line-height:1.2;}
+  .landing-desc{font-size:13.5px;color:var(--ink2);line-height:1.8;margin-bottom:36px;max-width:420px;margin-left:auto;margin-right:auto;}
+  .landing-btn{background:var(--red);color:#fff;border:none;padding:16px 52px;font-size:16px;font-weight:800;letter-spacing:1px;border-radius:2px;cursor:pointer;transition:transform .1s,background .2s;font-family:inherit;box-shadow:0 8px 24px rgba(230,0,18,.25);}
+  .landing-btn:hover{transform:translateY(-2px);background:#c70010;}
+  .landing-btn:active{transform:translateY(0);}
+  .landing-foot{position:absolute;bottom:26px;left:0;right:0;text-align:center;font-size:12px;color:var(--gray);}
+  .app{display:block;}
+
+  /* ===== 移动端评分页优化 ===== */
+  @media (max-width:768px){
+    .masthead{padding:18px 16px 14px;}
+    .brandline{gap:10px;}
+    .title{font-size:22px;}
+    .en{letter-spacing:2px;}
+    .subtitle{display:none;}
+    .logicbar{display:none;}
+    .storebar{padding:10px 16px;gap:12px;border-bottom:none;}
+    .field label{font-size:11px;}
+    .field input{min-width:80px;font-size:13px;}
+    .wrap{padding:0 16px 40px;margin:0;max-width:none;}
+    .dash{grid-template-columns:1fr;margin:12px 0;border:none;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+    .dash-left{border-right:none;border-bottom:1px solid var(--line);padding:18px 16px;display:grid;grid-template-columns:1fr 1fr;gap:0 16px;align-items:center;}
+    .score-num{font-size:48px;grid-column:1;}
+    .score-label{font-size:10px;grid-column:1;}
+    .score-level{grid-column:2;justify-self:end;margin-top:0;}
+    .red-alert{grid-column:1 / -1;}
+    .leak-row{grid-column:1 / -1;border-top:none;padding-top:12px;margin-top:0;justify-content:space-between;}
+    .dash-right{padding:16px;display:flex;flex-direction:column;gap:18px;}
+    .panel-h{margin-bottom:10px;}
+    .loss-grid{grid-template-columns:repeat(3,1fr);padding-top:12px;gap:8px;}
+    .loss-v{font-size:20px;}
+    .loss-t{font-size:10px;}
+    .toolbar{position:static;flex-direction:column;align-items:stretch;gap:10px;padding:10px 0;margin:10px 0 0;}
+    .toolbar .filters{display:flex;flex-wrap:wrap;gap:6px;}
+    .toolbar .spacer{display:none;}
+    .toolbar .actions{display:flex;flex-wrap:wrap;gap:6px;}
+    .action-btn{font-size:11px;padding:7px 10px;flex:1 1 auto;white-space:nowrap;}
+    .fixlist-sec{margin:20px 0;}
+    .stagenav{margin:10px 16px 4px;}
+    .station{margin:26px 16px 0;}
+    .station-head{padding-bottom:8px;}
+    .station-idx{font-size:26px;}
+    .station-name{font-size:18px;}
+    .station-where{font-size:11px;padding:4px 8px;}
+    .tp-top{padding:11px 14px;}
+    .tp-name{font-size:15px;}
+    .item-row{padding:10px 14px;}
+    .item-q{font-size:13px;}
+    .foot{display:none;}
+    .landing-title{font-size:22px;}
+    .landing-claim{font-size:26px;}
+    .landing-desc{font-size:12px;}
+    .landing-btn{padding:14px 40px;font-size:15px;}
+  }
+
+  /* ===== 诊断引导页 ===== */
+  .guide-screen{position:fixed;inset:0;background:#fff;z-index:4900;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  .guide-screen.show{display:flex;}
+  .guide-inner{max-width:540px;}
+  .guide-label{font-size:12px;letter-spacing:3px;color:var(--gray);font-weight:700;text-transform:uppercase;margin-bottom:18px;}
+  .guide-flow{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:30px;}
+  .g-pill{font-size:12px;font-weight:700;padding:6px 12px;border:1px solid var(--line);border-radius:2px;color:var(--ink2);background:var(--panel);}
+  .g-pill.active{border-color:var(--red);background:var(--red);color:#fff;}
+  .guide-step{font-size:13px;color:var(--red);font-weight:800;letter-spacing:1px;margin-bottom:8px;}
+  .guide-title{font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1.25;margin-bottom:16px;}
+  .guide-desc{font-size:14px;color:var(--ink2);line-height:1.8;margin-bottom:36px;}
+  .guide-desc b{color:var(--red);font-weight:700;}
+  .guide-tip{font-size:12.5px;color:var(--gray);margin:-10px 0 16px;}
+  .guide-tip b{color:var(--ink);font-weight:700;}
+  .guide-form{max-width:480px;margin:0 auto 28px;text-align:left;}
+  .guide-form .gf-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .guide-form .gf-field{flex:1 1 120px;min-width:120px;}
+  .guide-form label{display:block;font-size:11px;color:var(--gray);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;}
+  .guide-form input{width:100%;padding:10px 12px;border:1px solid var(--line);font-size:14px;font-family:inherit;border-radius:2px;outline:none;transition:border-color .2s,background .2s;box-sizing:border-box;}
+  .guide-form input:focus{border-color:var(--red);}
+  .guide-form input.warn{border-color:var(--red);background:#fff4f4;}
+  .guide-form .gf-date{font-size:12px;color:var(--gray);text-align:center;margin-top:12px;}
+  .guide-info-warn{text-align:center;color:var(--red);font-size:12.5px;margin-top:10px;background:#fff4f4;border:1px solid var(--red);padding:8px 12px;border-radius:2px;}
+  .guide-back{display:block;margin:18px auto 0;background:none;border:none;color:var(--gray);font-size:12px;cursor:pointer;font-family:inherit;}
+  .guide-back:hover{color:var(--ink);}
+  .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-60px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;padding:10px 22px;border-radius:2px;z-index:6000;opacity:0;transition:all .3s;pointer-events:none;}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  @media (max-width:768px){
+    .guide-title{font-size:24px;}
+    .guide-desc{font-size:13px;}
+    .guide-flow{gap:6px;}
+    .g-pill{font-size:11px;padding:5px 9px;}
+    .guide-form .gf-row{flex-direction:column;gap:10px;}
+    .guide-form .gf-field{width:100%;}
+  }
+
+  /* ===== 字体统一：评分 → 报告 → 出图 同套字体角色（与小红书生成器一致） ===== */
+  @font-face{font-family:"汇文明朝体";src:url("fonts/huiwenmincho-improved.woff2") format("woff2");font-display:swap;font-weight:400 900;}
+  .title,.subtitle,.landing-title,.landing-claim,.guide-title,.station-name,.tp-name,.report-brand,.report-head h2,.rep-h,.rep-radar h4,.rep-wcard .wt,.fr-tp,.panel-h,.guide-label{font-family:var(--title) !important;}
+  .score-num,.loss-v,.rep-kpi .v,.rep-wcard .ws,.station-idx,.leak-item .v,.rep-loss .lv,.en,.score-label,.en2,.stage-pill .en{font-family:var(--sans) !important;}
+  input,textarea,button,select{font-family:var(--sans) !important;}
+</style>
+</head>
+<body>
+
+<div class="landing" id="landing">
+  <div class="landing-inner">
+    <div class="landing-brand">
+      <span class="landing-mark"></span>
+      <span class="landing-title">门店经营触点诊断地图</span>
+      <span class="ver" id="landVer">v2.6.13</span>
+    </div>
+    <div class="landing-subtitle">Store Touchpoint Diagnostic Map</div>
+    <div class="landing-claim">15 分钟，找到门店漏钱点</div>
+    <p class="landing-desc">按 7 站位 × 32 触点逐项核对，把客流、信任、转化、体验、复购漏在哪里，一次看清。</p>
+    <button class="landing-btn" onclick="startApp()">开始诊断</button>
+    <div class="landing-foot">© 位道策划 · STDM 诊断模型</div>
+  </div>
+</div>
+
+
+<div class="guide-screen" id="guideScreen">
+  <div class="guide-inner">
+    <div class="guide-label">诊断流程 · 7 站位</div>
+    <div class="guide-flow">
+      <span class="g-pill active">远观站</span>
+      <span class="g-pill">近门站</span>
+      <span class="g-pill">等位站</span>
+      <span class="g-pill">入店站</span>
+      <span class="g-pill">餐桌站</span>
+      <span class="g-pill">离店站</span>
+      <span class="g-pill">线上站</span>
+    </div>
+    <div class="guide-step">第一步 · 远观站</div>
+    <h2 class="guide-title">站在主客流方向 / 马路对面<br>约 15 米外</h2>
+    <p class="guide-desc">站定一处，把本区域所有触点一次核对完。<br>每项 <b>合格打勾</b> / <b>有问题记下来</b>，系统自动算出门店漏钱点。</p>
+    <p class="guide-tip">📝 请填写以下基础信息，日期自动生成</p>
+    <div class="guide-form" id="guideForm">
+      <div class="gf-row">
+        <div class="gf-field"><label>门店</label><input id="g_store" placeholder="门店名称"></div>
+        <div class="gf-field"><label>品类</label><input id="g_cat" placeholder="火锅/茶饮/快餐"></div>
+        <div class="gf-field"><label>诊断人</label><input id="g_who" placeholder="姓名/岗位"></div>
+      </div>
+      <div class="gf-date" id="g_date">诊断日期：—</div>
+      <div class="guide-info-warn" id="guideInfoWarn" style="display:none"></div>
+    </div>
+    <button class="landing-btn" onclick="enterStations()">开始检查远观站</button>
+    <button class="guide-back" onclick="backToLanding()">返回首页</button>
+  </div>
+</div>
+
+<div id="app" class="app" style="display:none">
+<header class="masthead">
+  <div class="brandline">
+    <span class="redmark"></span>
+    <span class="title">门店经营触点诊断地图</span>
+    <span class="ver" id="verBadge">v2.6.13</span>
+    <span class="en">Store Touchpoint Diagnostic Map</span>
+  </div>
+  <p class="subtitle">
+    按<b>站位</b>组织的逐项诊断清单：站定一处，把本区域所有触点一次核对完。每项 <b>合格打勾 / 有问题记下来</b>，
+    系统自动算出——顾客每走一步，门店在哪个触点漏掉了流量、信任、转化、体验和复购。
+  </p>
+  <div class="logicbar">
+    <div class="logic-bar-h"><b>底层逻辑 · 六阶段顾客旅程</b> / The Customer Journey Axis</div>
+    <div class="logic-flow">
+      <span class="stage-pill"><span class="idx">①</span>看得见<span class="en">SEE</span></span>
+      <span class="stage-arrow">→</span>
+      <span class="stage-pill"><span class="idx">②</span>找得着<span class="en">FIND</span></span>
+      <span class="stage-arrow">→</span>
+      <span class="stage-pill"><span class="idx">③</span>等得住<span class="en">WAIT</span></span>
+      <span class="stage-arrow">→</span>
+      <span class="stage-pill"><span class="idx">④</span>进得来<span class="en">ENTER</span></span>
+      <span class="stage-arrow">→</span>
+      <span class="stage-pill"><span class="idx">⑤</span>吃得好<span class="en">ENJOY</span></span>
+      <span class="stage-arrow">→</span>
+      <span class="stage-pill"><span class="idx">⑥</span>会再来<span class="en">RETURN</span></span>
+    </div>
+    <div class="logic-note">
+      这是本模型的<b>解读主轴</b>：所有经营问题，都必须放回顾客旅程里诊断——顾客每走一步，门店在哪个触点漏掉了流量、信任、转化、体验与复购。<br>
+      <b>7 站位</b>是它的<b>执行视图</b>（按实地走位重组，站定一处填完、不折返）；<b>六阶段</b>是它的<b>解读视图</b>（按经营归因，老板一眼看懂"漏在哪段"）。两者同源，一套数据。
+    </div>
+  </div>
+</header>
+
+<div class="storebar">
+  <div class="field"><label>门店</label><input id="f_store" placeholder="门店名称"></div>
+  <div class="field"><label>品类</label><input id="f_cat" placeholder="火锅/茶饮/快餐"></div>
+  <div class="field"><label>诊断人</label><input id="f_who" placeholder="姓名/岗位"></div>
+  <div class="field"><label>日期</label><input id="f_date" type="date"></div>
+  <div class="info-remind" id="infoRemind" style="display:none"></div>
+</div>
+
+<div class="demobanner" id="demobanner">演示数据已载入 · 点「清空」开始真实诊断，点「载入演示数据」可再次查看</div>
+
+<div class="wrap">
+
+  <section class="dash">
+    <div class="dash-left">
+      <div class="score-num" id="d_score">—</div>
+      <div class="score-label">经营健康分 / Health</div>
+      <div class="score-level" id="d_level"></div>
+      <div class="red-alert" id="d_redalert">⚠ 食安红线触发，门店直接判定为高危级</div>
+      <div class="leak-row">
+        <div class="leak-item"><div class="v r" id="d_bad">0</div><div class="c">项漏钱 ✗</div></div>
+        <div class="leak-item"><div class="v a" id="d_warn">0</div><div class="c">项预警 ⚠</div></div>
+      </div>
+      <div class="prog">已诊断 <b id="d_done">0</b> / <span id="d_total">0</span> 个检查项<span id="d_missing" class="missing" style="display:none"> · 还有 <b id="d_mcount">0</b> 项漏评</span></div>
+    </div>
+    <div class="dash-right">
+      <div>
+        <div class="panel-h">七站位 · 健康度 / Stations</div>
+        <div id="d_stations"></div>
+      </div>
+      <div>
+        <div class="panel-h">七大经营系统 · 健康度 / Systems</div>
+        <div id="d_systems"></div>
+      </div>
+      <div>
+        <div class="panel-h mt">六阶段顾客旅程 · 健康度 / Journey</div>
+        <div class="jn-grid" id="d_journey"></div>
+      </div>
+      <div class="loss-grid" id="d_loss"></div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="filters" id="filters">
+      <button class="fbtn active" data-f="all">全部触点<span class="n" id="c_all">0</span></button>
+      <button class="fbtn" data-f="bad" style="color:var(--red)">有漏钱<span class="n" id="c_bad">0</span></button>
+      <button class="fbtn" data-f="warn" style="color:var(--amber)">有预警<span class="n" id="c_warn">0</span></button>
+      <button class="fbtn" data-f="ok" style="color:var(--green)">全达标<span class="n" id="c_ok">0</span></button>
+      <button class="fbtn" data-f="none">未诊断<span class="n" id="c_none">0</span></button>
+    </div>
+    <div class="spacer"></div>
+    <div class="actions">
+    <button class="action-btn" onclick="window.print()">打印/导出PDF</button>
+    <button class="action-btn" onclick="exportCSV()">导出Excel(CSV)</button>
+    <button class="action-btn" onclick="generateReport()">生成诊断报告</button>
+    <button class="action-btn" onclick="exportPack()">导出诊断包</button>
+    <button class="action-btn" onclick="document.getElementById('impfile').click()">导入诊断包</button>
+    <input type="file" id="impfile" accept="application/json" style="display:none" onchange="importPack(this)">
+    <button class="action-btn" onclick="loadDemo()">载入演示数据</button>
+    <button class="action-btn reset" onclick="resetAll()">清空</button>
+    </div>
+  </div>
+
+  <section class="fixlist-sec" id="fixlist-sec">
+    <div class="panel-h">诊断结论 · 整改清单 / Action List</div>
+    <div class="fixfilter" id="fixfilter"></div>
+    <div id="fixlist"></div>
+  </section>
+
+  <nav class="stagenav" id="stagenav"></nav>
+
+  <div id="stations"></div>
+</div>
+
+<section id="report" class="report-view">
+  <div class="report-inner">
+    <div class="report-head">
+      <div>
+        <div class="report-brand">STDM · 门店经营触点诊断地图</div>
+        <h2>门店经营诊断报告</h2>
+        <div class="meta" id="reportMeta">—</div>
+      </div>
+      <div>
+        <button class="report-close" onclick="printReport()" style="margin-right:6px">打印报告</button>
+        <button class="report-close" onclick="exportXHSData()" style="margin-right:6px">导出小红书图文</button>
+        <button class="report-close" onclick="closeReport()">关闭</button>
+      </div>
+    </div>
+    <div id="reportBody"></div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span>© 位道策划 · <b>门店经营触点诊断地图 STDM 2.6</b> · 7 站位 × 32 触点 × 三态逐项清单</span>
+  <span>所有经营问题，都必须放回<b>顾客旅程</b>里诊断。</span>
+</footer>
+</div>
+
+<script>
+
+function startApp(){
+  document.getElementById('landing').style.display='none';
+  document.getElementById('guideScreen').style.display='flex';
+  document.getElementById('guideScreen').classList.add('show');
+  document.body.classList.add('in-guide');
+  // 回显已有门店信息到引导页
+  const info=JSON.parse(localStorage.getItem(LS_INFO)||"{}");
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('g_store').value=info.f_store||"";
+  document.getElementById('g_cat').value=info.f_cat||"";
+  document.getElementById('g_who').value=info.f_who||"";
+  document.getElementById('g_date').textContent="诊断日期："+(info.f_date||today);
+  document.getElementById('guideInfoWarn').style.display='none';
+  ["g_store","g_cat","g_who"].forEach(id=>document.getElementById(id).classList.remove('warn'));
+}
+function enterStations(){
+  const miss=[];
+  ["g_store","g_cat","g_who"].forEach(id=>document.getElementById(id).classList.remove('warn'));
+  if(!gval("g_store"))miss.push({name:"门店",id:"g_store"});
+  if(!gval("g_cat"))miss.push({name:"品类",id:"g_cat"});
+  if(!gval("g_who"))miss.push({name:"诊断人",id:"g_who"});
+  if(miss.length){
+    miss.forEach(m=>document.getElementById(m.id).classList.add('warn'));
+    document.getElementById('guideInfoWarn').style.display='block';
+    document.getElementById('guideInfoWarn').textContent="⚠ 请填写："+miss.map(m=>m.name).join(" / ");
+    return;
+  }
+  document.getElementById('guideInfoWarn').style.display='none';
+  // 保存四要素（日期自动生成）
+  const info={f_store:gval("g_store"),f_cat:gval("g_cat"),f_who:gval("g_who"),f_date:new Date().toISOString().slice(0,10)};
+  localStorage.setItem(LS_INFO,JSON.stringify(info));
+  loadInfo();
+  document.getElementById('guideScreen').classList.remove('show');
+  document.getElementById('guideScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.body.classList.remove('in-guide');
+  document.body.classList.add('in-app');
+  window.scrollTo(0,0);
+  checkInfo();
+  setTimeout(()=>{const el=document.getElementById('st①');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);
+}
+function gval(id){const e=document.getElementById(id);return e?e.value.trim():"";}
+function backToLanding(){
+  document.getElementById('guideScreen').classList.remove('show');
+  document.getElementById('guideScreen').style.display='none';
+  document.getElementById('landing').style.display='flex';
+  document.body.classList.remove('in-guide');
+}
+function showToast(msg){
+  let t=document.getElementById('stdmToast');
+  if(!t){t=document.createElement('div');t.id='stdmToast';t.className='toast';document.body.appendChild(t);}
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+const SYSTEMS=["品牌系统","产品系统","空间系统","服务系统","运营系统","信任系统","关系系统"];
+const LOSS_TYPES=["流量损耗","转化损耗","体验损耗","效率损耗","信任损耗","复购损耗"];
+const LOSS_PRIORITY={"信任损耗":1,"流量损耗":2,"转化损耗":3,"体验损耗":4,"效率损耗":5,"复购损耗":6};
+const JOURNEYS=["看得见","找得着","等得住","进得来","吃得好","会再来"];
+const BENCH=80;   // 行业基准线（优秀门店健康分）
+const VERSION="2.6.21";   // 版本号（单一数据源：页头徽标 + 报告页脚 + 诊断包标识均由此驱动）
+
+/* ===== 数据：7站位 × 32触点，每触点含检查小项 ===== */
+const STATIONS=[
+{idx:"①",name:"远观站",en:"FAR VIEW",where:"站在<b>主客流方向 / 马路对面 · 约15米外</b>，站定一处看门店整体",
+ tps:[
+  {id:1,tp:"门头品类表达",sys:"品牌系统",jn:"看得见",loss:"流量损耗",why:"陌生客路过3秒内看不懂卖什么，就直接走掉。这一项决定陌生客进店率。",
+   items:[{n:"品类词一眼可读",a:"站定看门头3秒，说出这是卖什么的",s:"3秒内能准确说出品类"},
+          {n:"门头夜间亮度足够",a:"观察夜间/傍晚门头照明",s:"字牌明亮清晰、不发暗"},
+          {n:"门头整洁无破损",a:"看招牌新旧程度",s:"无脏污、褪色、破损、缺字"}]},
+  {id:2,tp:"品牌LOGO识别",sys:"品牌系统",jn:"看得见",loss:"流量损耗",why:"LOGO无存在感，品牌被忽略、记不住，反复到店成本高。",
+   items:[{n:"LOGO远距可见",a:"10米外观察LOGO",s:"10米可清晰识别"},
+          {n:"造型有记忆点",a:"看LOGO造型辨识度",s:"有记忆点、不与他家雷同"}]},
+  {id:3,tp:"差异化卖点/Slogan",sys:"品牌系统",jn:"看得见",loss:"流量损耗",why:"同质竞争下缺少一句进入理由，顾客没理由选你不选隔壁。",
+   items:[{n:"有一句话卖点",a:"在门头/外立面找核心卖点",s:"一句话说清核心优势"},
+          {n:"卖点可信有钩子",a:"读这句卖点",s:"让人想进去，而非空泛口号"}]},
+  {id:4,tp:"门店存在感/亮度",sys:"空间系统",jn:"看得见",loss:"流量损耗",why:"门店被周边环境淹没，自然客流看不到你。",
+   items:[{n:"视觉突出被吸引",a:"主通道快速扫视一遍",s:"远眺一眼即可定位门店、被自然吸引"},
+          {n:"整体亮度充足",a:"看门店整体明暗",s:"不昏暗、不压抑"}]},
+  {id:5,tp:"橱窗/外摆/烟火气",sys:"空间系统",jn:"看得见",loss:"流量损耗",why:"冷清让顾客因从众心理不敢进；有人气才有进入冲动。",
+   items:[{n:"有人气/烟火气",a:"看门口氛围与就餐可见度",s:"有热闹感、有人在吃"},
+          {n:"橱窗外摆有吸引",a:"看橱窗与外摆呈现",s:"有内容、有食欲、不杂乱"}]}
+ ]},
+{idx:"②",name:"近门站",en:"AT DOOR",where:"走到<b>门口 3 米内</b>站定，看门口细节与进入体验",
+ tps:[
+  {id:6,tp:"招牌/爆品展示",sys:"产品系统",jn:"看得见",loss:"流量损耗",why:"门口看不到值得吃的产品，就缺少进店动机。",
+   items:[{n:"招牌产品可见",a:"看门口海报/灯箱/展示",s:"招牌产品清晰可见"},
+          {n:"产品有食欲感",a:"看产品图片/实物呈现",s:"让人产生食欲与冲动"}]},
+  {id:7,tp:"明档/食材可见",sys:"信任系统",jn:"看得见",loss:"信任损耗",redline:true,why:"陌生客担心卫生不敢进，看得见的干净=敢进去。",
+   items:[{n:"明档/操作透明",a:"看明档、后厨、食材展示",s:"操作与食材可见、透明（食安红线项，不合格即判高危）"},
+          {n:"门口环境洁净",a:"看门口地面、台面",s:"整洁、无油污杂物（食安红线项，不合格即判高危）"}]},
+  {id:8,tp:"价格锚点/人均",sys:"产品系统",jn:"看得见",loss:"转化损耗",why:"进店前不知道多少钱，怕贵就不敢进。",
+   items:[{n:"门口有价格信息",a:"找门口菜单/价目/招贴",s:"进店前能看到价格"},
+          {n:"人均可预期",a:"门口看价目/估算消费水平",s:"门口明示人均区间、能预判消费档位"}]},
+  {id:9,tp:"节点导视/入口指引",sys:"空间系统",jn:"找得着",loss:"流量损耗",why:"找不到入口就会放弃，商场店尤其严重。",
+   items:[{n:"入口位置明确",a:"看入口指引",s:"一眼知道从哪进"},
+          {n:"关键节点有指引",a:"看转角/电梯/楼层（商场店）",s:"关键节点均有导视"}]},
+  {id:10,tp:"入口进入阻力",sys:"空间系统",jn:"进得来",loss:"转化损耗",why:"入口封闭、压迫，会在门口劝退顾客。",
+   items:[{n:"入口开放通透",a:"看门的形式与通透度",s:"开放、通透、易进入"},
+          {n:"进入无心理障碍",a:"感受进门那一刻",s:"安全、舒服、无压迫感"}]}
+ ]},
+{idx:"③",name:"等位站",en:"WAITING",where:"站在<b>等位区</b>，模拟顾客等待 3-5 分钟",
+ tps:[
+  {id:11,tp:"等位区舒适度",sys:"空间系统",jn:"等得住",loss:"转化损耗",why:"等待难受，顾客直接走人，白白流失已到店客流。",
+   items:[{n:"座椅充足",a:"看等位座椅数量",s:"高峰期等位座椅数≥同时在等人数×80%"},
+          {n:"冷暖遮蔽到位",a:"感受温度与遮挡",s:"有遮阳/取暖、不受罪"}]},
+  {id:12,tp:"等待时间管理",sys:"运营系统",jn:"等得住",loss:"转化损耗",why:"不知道要等多久的不确定感，是排队流失主因。",
+   items:[{n:"有叫号/排号系统",a:"看叫号与排号方式",s:"排号清晰、有序"},
+          {n:"等待时间可预期",a:"询问预估等待时间",s:"能告知大概等多久"}]},
+  {id:13,tp:"等待价值感",sys:"品牌系统",jn:"等得住",loss:"体验损耗",why:"优秀品牌让'越等越期待'，而非纯忍耐消耗好感。",
+   items:[{n:"有品牌/产品触点",a:"看等位区内容",s:"有产品展示/品牌故事"},
+          {n:"有增值/互动",a:"看等位增值服务",s:"有小吃饮品/互动/服务"}]}
+ ]},
+{idx:"④",name:"入店站",en:"ENTERING",where:"<b>推门进店，专注前 30 秒</b>体验第一印象",
+ tps:[
+  {id:14,tp:"迎宾响应",sys:"服务系统",jn:"进得来",loss:"转化损耗",why:"进店无人理会，第一印象直接崩，直接决定顾客是否留下消费。",
+   items:[{n:"进店有响应",a:"计时：进门到被响应",s:"10秒内有人回应"},
+          {n:"迎宾有温度",a:"观察迎宾方式",s:"有眼神/招呼，非机械"}]},
+  {id:15,tp:"第一30秒引导",sys:"服务系统",jn:"进得来",loss:"转化损耗",why:"进门后无所适从的30秒，决定顾客留不留。",
+   items:[{n:"30秒内被引导",a:"进店后观察是否被指引",s:"明确带位/取号/点单"},
+          {n:"顾客不尴尬",a:"感受进店那一刻",s:"不会站着不知所措"}]},
+  {id:16,tp:"空间动线",sys:"空间系统",jn:"进得来",loss:"效率损耗",why:"动线混乱要反复问人，体验与效率双降。",
+   items:[{n:"动线一目了然",a:"走一遍主要动线",s:"无需询问就知道怎么走"},
+          {n:"关键区有指引",a:"找取餐/洗手间/自助区",s:"关键功能区有指引"}]}
+ ]},
+{idx:"⑤",name:"餐桌站",en:"AT TABLE",where:"<b>入座点餐、就餐全程</b>，从顾客视角完整体验一次",
+ tps:[
+  {id:17,tp:"招牌产品兑现",sys:"产品系统",jn:"吃得好",loss:"体验损耗",why:"产品与宣传落差大，满意度与复购一起垮。",
+   items:[{n:"品质与宣传一致",a:"点招牌菜体验",s:"与图片/描述相符"},
+          {n:"份量合理",a:"看出品份量",s:"份量实在、不缩水"}]},
+  {id:18,tp:"点单决策效率",sys:"产品系统",jn:"吃得好",loss:"效率损耗",why:"菜单混乱、不会点，拉低点单效率与客单。",
+   items:[{n:"菜单结构清晰",a:"以新客视角看菜单",s:"易读易选、3分钟能决策"},
+          {n:"有推荐引导",a:"看菜单推荐设计",s:"有招牌/套餐/组合推荐"}]},
+  {id:19,tp:"出品速度",sys:"运营系统",jn:"吃得好",loss:"效率损耗",why:"上菜过慢，体验下降、翻台变差。",
+   items:[{n:"上菜及时",a:"记录点单到核心菜上齐时间",s:"核心菜品在门店公示时限内上齐（通用基准：热菜≤15分钟）"},
+          {n:"无长时间空台",a:"观察上菜节奏",s:"无超过10分钟全程空台无菜上桌"}]},
+  {id:20,tp:"服务响应效率",sys:"服务系统",jn:"吃得好",loss:"体验损耗",why:"呼叫无人应，是体验最直接的扣分项。",
+   items:[{n:"呼叫及时响应",a:"模拟加水/加菜/呼叫并计时",s:"呼叫后60秒内到位（迎宾/服务响应标准）"},
+          {n:"主动巡台",a:"观察服务主动性",s:"主动关注、非只等呼叫"}]},
+  {id:21,tp:"就餐环境舒适",sys:"空间系统",jn:"吃得好",loss:"体验损耗",why:"环境不适影响停留意愿与满意度。",
+   items:[{n:"灯光/噪音参数达标",a:"测就餐区桌面照度与色温，测用餐噪音峰值",s:"照度/色温符合本店 SI 氛围标准（通用参考：桌面150–300lx、色温2700–3500K），用餐噪音≤65dB"},
+          {n:"桌距与台面卫生",a:"看桌距与台面",s:"桌间距合理不局促、台面无油污残渣、椅面洁净"}]},
+  {id:22,tp:"餐具卫生/食安",sys:"信任系统",jn:"吃得好",loss:"信任损耗",redline:true,why:"卫生问题一旦发生，信任崩塌、差评风险极高。",
+   items:[{n:"餐具洁净",a:"检查餐具",s:"无污渍/水渍/异味（食安红线项，不合格即判高危）"},
+          {n:"食材新鲜",a:"看菜品新鲜度",s:"新鲜、无异常（食安红线项，不合格即判高危）"}]},
+  {id:23,tp:"性价比感知",sys:"产品系统",jn:"吃得好",loss:"复购损耗",why:"觉得贵/不值，直接压制复购意愿。",
+   items:[{n:"物有所值感",a:"结合整体体验评估",s:"顾客感觉值这个价"},
+          {n:"价格体验匹配",a:"对比消费与体验",s:"无被宰感"}]}
+ ]},
+{idx:"⑥",name:"离店站",en:"DEPARTING",where:"站在<b>出口 / 离店动线</b>，体验从结账到离店全过程",
+ tps:[
+  {id:24,tp:"结账便捷度",sys:"运营系统",jn:"会再来",loss:"效率损耗",why:"结账体验差，会毁掉整顿饭的最后印象。",
+   items:[{n:"结账快捷",a:"体验结账流程",s:"无排长队/卡顿"},
+          {n:"支付齐全无差错",a:"看支付方式与准确性",s:"多种支付、金额准确"}]},
+  {id:25,tp:"离店记忆/道别",sys:"品牌系统",jn:"会再来",loss:"复购损耗",why:"离店无感=被遗忘，下次想不起你。",
+   items:[{n:"有送客道别",a:"观察离店送别",s:"有礼貌送别/招呼"},
+          {n:"有品牌记忆点",a:"看离店触点",s:"有伴手礼/氛围/记忆话术"}]},
+  {id:26,tp:"会员入口",sys:"关系系统",jn:"会再来",loss:"复购损耗",why:"消费后不留会员，等于每次都从陌生客重新获客。",
+   items:[{n:"会员入口清晰",a:"看收银台会员引导",s:"入口明显、易加入"},
+          {n:"加入有理由",a:"看会员权益",s:"权益有吸引力"}]},
+  {id:27,tp:"私域连接",sys:"关系系统",jn:"会再来",loss:"复购损耗",why:"无法二次触达，私域资产持续流失。",
+   items:[{n:"有私域引导",a:"看企微/群/公众号引导",s:"有清晰承接入口"},
+          {n:"承接有钩子",a:"看加私域的理由",s:"加了有福利/有理由"}]},
+  {id:28,tp:"复购钩子",sys:"关系系统",jn:"会再来",loss:"复购损耗",why:"没有回来的理由，复购自然掉。",
+   items:[{n:"有复购激励",a:"看是否给复购券/理由",s:"离店植入明确复购激励"},
+          {n:"有下次期待",a:"看新品/活动预告",s:"给顾客下次再来的期待"}]}
+ ]},
+{idx:"⑦",name:"线上站",en:"ONLINE",where:"用<b>手机</b>在出发前 / 路上 / 事后完成（大众点评·小红书·地图）",
+ tps:[
+  {id:29,tp:"线上地图定位",sys:"运营系统",jn:"找得着",loss:"流量损耗",why:"定位不准/信息错，目的客流直接流失。",
+   items:[{n:"地图定位准确",a:"用地图导航实测",s:"定位准、不绕路"},
+          {n:"营业信息正确",a:"看营业时间与状态",s:"时间/状态/电话正确"}]},
+  {id:30,tp:"线上内容表达",sys:"品牌系统",jn:"找得着",loss:"流量损耗",why:"线上第一印象差、信息缺，线上到店转化就低。",
+   items:[{n:"首图有吸引力",a:"看点评/小红书/抖音首图",s:"首图有吸引力、有食欲"},
+          {n:"评价与信息完整",a:"看评价、菜单、地址",s:"评价良好、信息齐全"}]},
+  {id:31,tp:"到店路径/最后50米",sys:"空间系统",jn:"找得着",loss:"流量损耗",why:"最后50米受阻，会导致中途放弃。",
+   items:[{n:"路径顺畅",a:"从停车/路口走一遍",s:"无明显阻碍"},
+          {n:"停车/接驳便利",a:"看停车与接驳",s:"停车方便或有清晰指引"}]},
+  {id:32,tp:"口碑/推荐传播",sys:"关系系统",jn:"会再来",loss:"复购损耗",why:"顾客满意却不传播，损失最低成本的自然获客。",
+   items:[{n:"有值得晒的点",a:"看是否有打卡/拍照点",s:"有值得分享的记忆点"},
+          {n:"有分享激励",a:"看晒单/推荐机制",s:"晒单/推荐有激励"}]}
+ ]}
+];
+
+/* ===== 状态 ===== */
+const LS_STATE="stdm2_state", LS_NOTE="stdm2_note", LS_INFO="stdm2_info", LS_PIC="stdm2_pic";
+let ST=JSON.parse(localStorage.getItem(LS_STATE)||"{}");   // key: "tpId-itemIdx" -> ok|warn|bad
+let NT=JSON.parse(localStorage.getItem(LS_NOTE)||"{}");    // key -> text
+let PICS=JSON.parse(localStorage.getItem(LS_PIC)||"{}");   // key -> base64 image
+
+let curFilter="all";
+let curLossFilter="";
+function savePics(){localStorage.setItem(LS_PIC,JSON.stringify(PICS));}
+
+
+const allTps=()=>STATIONS.flatMap(s=>s.tps);
+const allItemsCount=()=>allTps().reduce((n,t)=>n+t.items.length,0);
+const key=(tp,i)=>tp+"-"+i;
+
+/* ===== 权重：食安红线项、转化损耗项权重 ×2，其余 ×1 ===== */
+function tpWeight(t){return (t.redline||t.loss==="转化损耗")?2:1;}
+/* 加权汇总（含未评项，未评按0；用于分解视图：站位/系统/旅程/单触点） */
+function wStats(tps){
+  let sm=0,w=0,bd=0,rated=0;
+  tps.forEach(t=>t.items.forEach((_,i)=>{
+    const v=ST[key(t.id,i)];
+    const wi=tpWeight(t);
+    w+=wi;
+    if(v){sm+=wi*(v==="ok"?1:v==="warn"?.5:0);rated++;if(v==="bad")bd++;}
+  }));
+  return{sm,w,bd,rated};
+}
+/* 加权汇总（含未评项，未评按0，用于整体真实健康分） */
+function wStatsAll(){
+  let num=0,den=0;
+  allTps().forEach(t=>{const wi=tpWeight(t);t.items.forEach((_,i)=>{
+    den+=wi;const v=ST[key(t.id,i)];if(v)num+=wi*(v==="ok"?1:v==="warn"?.5:0);
+  });});
+  return{num,den};
+}
+/* 单触点加权得分（含未评项按0） */
+function tpWeighted(t){let sm=0,w=0,rated=0;const wi=tpWeight(t);t.items.forEach((_,i)=>{const v=ST[key(t.id,i)];w+=wi;if(v){sm+=wi*(v==="ok"?1:v==="warn"?.5:0);rated++;}});return{sm,w,rated};}
+
+/* ===== 整改方向库（每触点一条，对应原10列"整改方向"） ===== */
+const FIX={
+  1:"门头用大字品类词 + 强化品类视觉符号；夜间补照明，确保3秒可读品类。",
+  2:"放大LOGO、提升对比度与记忆点；统一门头/工服/物料视觉，沉淀视觉资产。",
+  3:"提炼一句可信核心卖点，放门头/外立面；避免空泛口号。",
+  4:"提升整体照度与门头亮度；用跳色/造型从周边环境中跳出来。",
+  5:"增强明档/外摆可见度与热闹感；陈列有人气的就餐画面或实景。",
+  6:"门口设爆品灯箱/实物展示；用高清图+价格制造食欲与进入动机。",
+  7:"明档透明化、食材陈列可见可触；门口保持洁净，用『看得见干净』建立信任。",
+  8:"门口明示人均/招牌价；用价格锚点降低进店决策门槛。",
+  9:"主入口做明确地标与发光指引；商场店补关键节点导视。",
+  10:"门改开放通透式；消除进门心理压迫与障碍。",
+  11:"增设座椅、遮阳取暖；提供水/小吃降低等待痛苦。",
+  12:"上线叫号/排号系统；明确告知预估等待时长。",
+  13:"等位区植入产品展示/品牌故事/互动；把等待变成期待。",
+  14:"设迎宾岗，进门10秒内响应；培训有温度的问候。",
+  15:"进门即带位/取号/点单；消除『站着不知所措』的30秒。",
+  16:"动线一目了然，关键区（取餐/洗手间/自助）设指引。",
+  17:"锁定招牌菜SOP与份量标准；宣传与出品一致。",
+  18:"菜单结构化+招牌/套餐推荐；3分钟能决策。",
+  19:"优化出餐动线与备餐；设核心菜品上齐时限。",
+  20:"设呼叫响应标准与主动巡台；加水加菜及时。",
+  21:"调灯光/温湿度/噪音；控桌距与台面卫生。",
+  22:"餐具消毒可视化、食材保鲜标准；食安红线零容忍。",
+  23:"价值感设计（份量/赠品/组合）；避免被宰感。",
+  24:"多支付+快速结账；避免出口长队。",
+  25:"送客道别+品牌记忆点（伴手礼/话术/氛围）。",
+  26:"收银台清晰会员入口与权益；进店即引导加会员。",
+  27:"企微/群/公众号承接入口；加私域给明确钩子。",
+  28:"离店发复购券/新品预告；制造下次回来的理由。",
+  29:"校准地图定位/营业时间/电话；确保导航『最后一公里』准确。",
+  30:"优化点评/小红书首图与菜单信息；维护评价与线上第一印象。",
+  31:"增设指引/停车导流；打通最后50米可视路径。",
+  32:"设打卡点与晒单激励；把满意变传播。"
+};
+
+/* ===== 演示数据（首次打开自动载入，便于查看首屏结论） ===== */
+const DEMO_PROBLEMS=[
+ ["1-0","bad","门头只写品牌名，没写『火锅』，路人看不懂卖啥"],
+ ["1-1","warn","夜间亮度还行但品类字偏小"],
+ ["2-0","bad","LOGO太小，10米外认不出"],
+ ["4-0","warn","被隔壁招牌抢视线，存在感弱"],
+ ["7-1","bad","门口地面有油渍，显得不干净"],
+ ["8-0","bad","门口无任何价格，怕贵不敢进"],
+ ["29-0","bad","地图定位偏了50米，绕了一圈"],
+ ["9-0","bad","商场店入口标识不清，找不到从哪进"],
+ ["11-0","bad","等位没座位，只能站着等"],
+ ["12-0","warn","有排号但没人叫，不知道排到没"],
+ ["10-0","bad","玻璃门太封闭，不敢推"],
+ ["14-0","bad","进门5秒没人理"],
+ ["15-0","bad","进店后站着不知去哪"],
+ ["17-0","warn","招牌菜和图片有出入"],
+ ["18-0","bad","菜单太乱不会点"],
+ ["20-0","warn","加水要喊两次"],
+ ["22-0","bad","餐具上有水渍"],
+ ["25-0","bad","离店没人送，没记忆点"],
+ ["26-0","warn","会员入口不明显，没引导"],
+ ["28-0","bad","离店无任何复购激励"]
+];
+function loadDemo(){
+  ST={};NT={};PICS={};savePics();
+  STATIONS.forEach(s=>s.tps.forEach(t=>t.items.forEach((_,i)=>{ST[key(t.id,i)]="ok";})));
+  DEMO_PROBLEMS.forEach(([k,v,n])=>{ST[k]=v;NT[k]=n;});
+  localStorage.setItem(LS_STATE,JSON.stringify(ST));localStorage.setItem(LS_NOTE,JSON.stringify(NT));localStorage.setItem("stdm2_seeded","1");
+  const b=document.getElementById("demobanner");if(b)b.style.display="block";renderStations();updateDash();applyFilter();enterStations();
+}
+// 默认空状态：首屏不再自动载入演示数据，由用户手动点「载入演示数据」查看范例
+
+/* tp 汇总状态：red>amber>ok>none */
+function tpState(tp){
+  let has={ok:0,warn:0,bad:0,none:0};
+  tp.items.forEach((_,i)=>{const v=ST[key(tp.id,i)]; has[v||"none"]++;});
+  if(has.bad)return"red"; if(has.warn)return"amber";
+  if(has.none===tp.items.length)return"none";
+  if(has.ok===tp.items.length)return"green";
+  return"green";
+}
+/* tp 得分：ok=1 warn=.5 bad=0，仅计已评项 */
+function tpScore(tp){
+  let sum=0,cnt=0;
+  tp.items.forEach((_,i)=>{const v=ST[key(tp.id,i)];if(v){cnt++;sum+=v==="ok"?1:v==="warn"?.5:0;}});
+  return{sum,cnt};
+}
+
+/* ===== 渲染 ===== */
+function renderNav(){
+  document.getElementById("stagenav").innerHTML=STATIONS.map(s=>
+    `<a href="#st${s.idx}"><span class="idx">${s.idx}</span>${s.name}<span class="en2">${s.en}</span></a>`).join("");
+}
+function renderStations(){
+  document.getElementById("stations").innerHTML=STATIONS.map(s=>{
+    const done=s.tps.reduce((n,t)=>n+tpScore(t).cnt,0);
+    const tot=s.tps.reduce((n,t)=>n+t.items.length,0);
+    return `<section class="station" id="st${s.idx}">
+      <div class="station-head">
+        <span class="station-idx">${s.idx}</span>
+        <span class="station-name">${s.name}</span>
+        <span class="station-jn">旅程 · ${[...new Set(s.tps.map(t=>t.jn))].join(" · ")}</span>
+        <span class="station-where">${s.where}</span>
+        <span class="station-prog">${done}/${tot} 项</span>
+      </div>
+      ${s.tps.map(t=>tpCard(t)).join("")}
+    </section>`;
+  }).join("");
+  bind();
+}
+function tpCard(t){
+  const stt=tpState(t), cls=stt!=="none"?("s-"+stt):"";
+  const ws=tpWeighted(t);
+  const scoreTxt=ws.rated?`${Math.round(ws.sm/ws.w*100)}%`:"未诊断";
+  const wchip=tpWeight(t)>1?'<span class="chip wchip">权重 ×2</span>':"";
+  return `<div class="tp ${cls}" data-tp="${t.id}" data-state="${stt}" data-loss="${t.loss}">
+    <div class="tp-top">
+      <span class="tp-id">${String(t.id).padStart(2,"0")}</span>
+      <span class="tp-name">${t.tp}</span>
+      <span class="chip">${t.jn}</span>
+      <span class="chip sys">${t.sys}</span>
+      <span class="chip loss">${t.loss}</span>
+      ${wchip}
+      <span class="tp-score">${scoreTxt}</span>
+    </div>
+    <div class="why"><span class="tag">为什么查 · </span>${t.why}</div>
+    ${stt==="red"||stt==="amber"?`<div class="fix"><span class="tag">整改方向 · </span>${FIX[t.id]||""}</div>`:""}
+    ${t.items.map((it,i)=>itemRow(t.id,i,it)).join("")}
+  </div>`;
+}
+function itemRow(tpId,i,it){
+  const k=key(tpId,i), v=ST[k]||"", note=NT[k]||"";
+  const showNote=(v==="warn"||v==="bad");
+  return `<div class="item">
+    <div class="item-main">
+      <div class="item-name">${i+1}. ${it.n}</div>
+      <div class="item-line"><span class="k k-act">怎么查 · </span>${it.a}</div>
+      <div class="item-line"><span class="k k-std">合格 · </span>${it.s}</div>
+    </div>
+    <div class="item-right">
+      <div class="seg">
+        <button class="sbtn ok ${v==="ok"?"on":""}" data-k="${k}" data-v="ok">✓ 合格</button>
+        <button class="sbtn warn ${v==="warn"?"on":""}" data-k="${k}" data-v="warn">⚠ 轻微</button>
+        <button class="sbtn bad ${v==="bad"?"on":""}" data-k="${k}" data-v="bad">✗ 漏钱</button>
+      </div>
+      <div class="note ${showNote?"show":""}" data-note="${k}">
+        <div class="nh">问题描述（选填）：</div>
+        <textarea data-k="${k}" placeholder="选填：具体现场情况、尺寸、时间等（会进整改清单）">${note}</textarea>
+        
+        <div class="picbox" data-k="${k}">
+          <label class="pic-btn">${PICS[k]?'重新上传展位图片':'上传展位图片'} <input type="file" accept="image/*" capture="environment" data-k="${k}"></label>
+          ${PICS[k]?`<span class="pic-wrap"><img class="pic-thumb" src="${PICS[k]}"><button type="button" class="pic-del" data-k="${k}">删除</button></span>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ===== 交互 ===== */
+function bind(){
+  document.querySelectorAll(".sbtn").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k,v=b.dataset.v;
+    if(ST[k]===v)delete ST[k]; else ST[k]=v;
+    saveState(); renderStations(); updateDash(); applyFilter();
+  });
+  document.querySelectorAll(".note textarea").forEach(t=>t.oninput=()=>{
+    NT[t.dataset.k]=t.value; localStorage.setItem(LS_NOTE,JSON.stringify(NT));
+  });
+  document.querySelectorAll(".picbox input").forEach(inp=>inp.onchange=()=>{
+    const file=inp.files[0]; if(!file)return;
+    const k=inp.dataset.k;
+    resizeImage(file,800,0.7,dataUrl=>{PICS[k]=dataUrl;savePics();renderStations();});
+  });
+  
+}
+function resizeImage(file,maxW,quality,cb){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement("canvas");
+      const w=img.width>maxW?maxW:img.width;
+      const h=Math.round(img.height*(w/img.width));
+      canvas.width=w; canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      cb(canvas.toDataURL("image/jpeg",quality));
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ===== 仪表盘 ===== */
+function updateDash(){
+  const tps=allTps();
+  let done=0,bad=0,warn=0,sum=0;
+  tps.forEach(t=>t.items.forEach((_,i)=>{
+    const v=ST[key(t.id,i)];
+    if(v){done++; sum+=v==="ok"?1:v==="warn"?.5:0; if(v==="bad")bad++; if(v==="warn")warn++;}
+  }));
+  const totalItems=allItemsCount();
+  const redTriggered=tps.some(t=>t.redline && t.items.some((_,i)=>ST[key(t.id,i)]==="bad"));
+  const o=wStatsAll();
+  let realScore=done?Math.round(o.num/o.den*100):0;
+  if(redTriggered) realScore=Math.min(realScore,60);
+  document.getElementById("d_score").textContent=done?realScore:"—";
+  const lv=document.getElementById("d_level");
+  if(!done){lv.textContent="";lv.className="score-level";}
+  else if(realScore>=90){lv.textContent="标杆店";lv.className="score-level ok";}
+  else if(realScore>=70){lv.textContent="亚健康店";lv.className="score-level warn";}
+  else{lv.textContent="高危店";lv.className="score-level bad";}
+  document.getElementById("d_redalert").style.display=redTriggered?"block":"none";
+  document.getElementById("d_bad").textContent=bad;
+  document.getElementById("d_warn").textContent=warn;
+  document.getElementById("d_done").textContent=done;
+  document.getElementById("d_total").textContent=allItemsCount();
+  const missEl=document.getElementById("d_missing");
+  const miss=totalItems-done;
+  if(missEl){missEl.style.display=miss>0?"inline":"none";document.getElementById("d_mcount").textContent=miss;}
+
+  // 触点级筛选计数
+  let cAll=tps.length,cBad=0,cWarn=0,cOk=0,cNone=0;
+  tps.forEach(t=>{const s=tpState(t); if(s==="red")cBad++;else if(s==="amber")cWarn++;else if(s==="green")cOk++;else cNone++;});
+  set("c_all",cAll);set("c_bad",cBad);set("c_warn",cWarn);set("c_ok",cOk);set("c_none",cNone);
+
+  // 站位健康度（与系统/旅程一致：绿≥70·黄≥40·红<40）
+  document.getElementById("d_stations").innerHTML=STATIONS.map(s=>{
+    const st=wStats(s.tps);
+    const pct=st.w?Math.round(st.sm/st.w*100):0;
+    const col=st.rated?(pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)'):'#ccc';
+    return bar(s.name,pct,col,st.rated?pct+"% · "+st.bd+"✗":"未诊断");
+  }).join("");
+
+  // 七系统健康度
+  document.getElementById("d_systems").innerHTML=SYSTEMS.map(sys=>{
+    const st=wStats(tps.filter(t=>t.sys===sys));
+    const pct=st.w?Math.round(st.sm/st.w*100):0;
+    const col=st.rated?(pct>=70?'var(--green)':pct>=40?'var(--amber)':'var(--red)'):'#ccc';
+    return bar(sys.replace("系统",""),pct,col,st.rated?pct+"%":"—");
+  }).join("");
+
+  // 六阶段顾客旅程健康度
+  document.getElementById("d_journey").innerHTML=JOURNEYS.map(jn=>{
+    const st=wStats(tps.filter(t=>t.jn===jn));
+    const pct=st.w?Math.round(st.sm/st.w*100):0;
+    return `<div class="jn-row"><span class="jn-name">${jn}</span><span class="jn-bar"><i class="${st.bd?'r':''}" style="width:${pct}%"></i></span><span class="jn-pct">${st.rated?pct+'% · '+st.bd+'✗':'未诊断'}</span></div>`;
+  }).join("");
+
+  // 六类损耗（漏钱项计数）
+  document.getElementById("d_loss").innerHTML=LOSS_TYPES.map(lt=>{
+    let r=0; tps.filter(t=>t.loss===lt).forEach(t=>t.items.forEach((_,i)=>{if(ST[key(t.id,i)]==="bad")r++;}));
+    return `<div class="loss-cell ${curLossFilter===lt?'active':''}" onclick="filterByLoss('${lt}')"><div class="loss-v ${r?"":"zero"}">${r}</div><div class="loss-t">${lt}</div></div>`;
+  }).join("");
+  renderFixList();
+}
+function filterByLoss(lt){
+  curLossFilter=curLossFilter===lt?"":lt;
+  updateDash();
+  applyFilter();
+  const sec=document.getElementById("fixlist-sec");if(sec)sec.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function genFix(t,note){
+  const base=FIX[t.id]||"";
+  return "整改建议："+base;
+}
+function renderFixList(){
+  const box=document.getElementById("fixlist");
+  const fbox=document.getElementById("fixfilter");
+  let rows=[];let seen={};allTps().forEach(t=>t.items.forEach((it,i)=>{
+    const v=ST[key(t.id,i)]; if(v==="ok"||!v)return;
+    const k=key(t.id,i);
+    if(seen[t.id]){const idx=seen[t.id];if(v==="bad" && rows[idx].v!=="bad") rows[idx]={t,it,v,note:NT[k]||"",k};}
+    else{seen[t.id]=rows.length;rows.push({t,it,v,note:NT[k]||"",k});}
+  }));
+  rows.sort((a,b)=>((a.v==="bad"?0:1)-(b.v==="bad"?0:1))||((LOSS_PRIORITY[a.t.loss]||9)-(LOSS_PRIORITY[b.t.loss]||9)));
+  rows.sort((a,b)=>((a.v==="bad"?0:1)-(b.v==="bad"?0:1))||((LOSS_PRIORITY[a.t.loss]||9)-(LOSS_PRIORITY[b.t.loss]||9)));
+  if(curLossFilter){
+    rows=rows.filter(r=>r.t.loss===curLossFilter);
+    if(fbox){fbox.classList.add("show");fbox.innerHTML=`<span>正在筛选：<b>${curLossFilter}</b>（${rows.length} 项）</span><a onclick="filterByLoss('${curLossFilter}')">清除筛选</a>`;}
+  }else{
+    if(fbox){fbox.classList.remove("show");fbox.innerHTML="";}
+  }
+  if(!rows.length){box.innerHTML='<div class="empty">当前无漏钱 / 预警项 — 全部达标 ✅</div>';return;}
+  box.innerHTML=rows.map(r=>{
+    const fix=genFix(r.t,r.note);
+    const pic=PICS[r.k]?`<img class="rep-thumb" src="${PICS[r.k]}">`:"";
+    
+    return `<div class="fix-row ${r.v}">
+      <div class="fr-top"><span class="fr-tp">${r.t.tp}</span>
+        <span class="chip">${r.t.jn}</span><span class="chip sys">${r.t.sys}</span>
+        <span class="fr-flag">${r.v==="bad"?"✗ 漏钱":"⚠ 预警"}</span></div>
+      <div class="fr-body">
+        ${r.note?`<div class="fr-line"><span class="k k-fix" style="color:var(--red)">问题 · </span>${r.note}</div>`:""}
+        ${pic}
+        <div class="fr-line"><span class="k k-fix">整改方向 · </span><span class="auto">${fix}</span></div>
+      </div>
+    </div>`;
+  }).join("");
+}
+function bar(name,pct,col,txt){
+  return `<div class="bar-row"><span class="bar-name">${name}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+    <span class="bar-pct">${txt}</span></div>`;
+}
+function set(id,v){document.getElementById(id).textContent=v;}
+
+/* ===== 筛选 ===== */
+document.getElementById("filters").addEventListener("click",e=>{
+  const b=e.target.closest(".fbtn");if(!b)return;
+  document.querySelectorAll(".fbtn").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");curFilter=b.dataset.f;applyFilter();
+});
+function applyFilter(){
+  document.querySelectorAll(".tp").forEach(el=>{
+    const s=el.dataset.state;let show=true;
+    if(curFilter==="bad")show=s==="red";
+    else if(curFilter==="warn")show=s==="amber";
+    else if(curFilter==="ok")show=s==="green";
+    else if(curFilter==="none")show=s==="none";
+    if(curLossFilter && el.dataset.loss!==curLossFilter) show=false;
+    el.classList.toggle("hidden",!show);
+  });
+  document.querySelectorAll(".station").forEach(sec=>{
+    const any=[...sec.querySelectorAll(".tp")].some(el=>!el.classList.contains("hidden"));
+    sec.classList.toggle("hidden",!any);
+  });
+}
+
+/* ===== 保存/信息 ===== */
+function saveState(){localStorage.setItem(LS_STATE,JSON.stringify(ST));}
+["f_store","f_cat","f_who","f_date"].forEach(id=>document.getElementById(id).addEventListener("input",saveInfo));
+["g_store","g_cat","g_who"].forEach(id=>document.getElementById(id).addEventListener("input",()=>{
+  const info=JSON.parse(localStorage.getItem(LS_INFO)||"{}");
+  info[id.replace("g_","f_")]=document.getElementById(id).value;
+  localStorage.setItem(LS_INFO,JSON.stringify(info));
+}));
+function saveInfo(){const o={};["f_store","f_cat","f_who","f_date"].forEach(id=>o[id]=document.getElementById(id).value);localStorage.setItem(LS_INFO,JSON.stringify(o));checkInfo();}
+function getVal(id){const e=document.getElementById(id);return e&&e.value.trim();}
+function checkInfo(){const miss=[];if(!getVal("f_store"))miss.push("门店");if(!getVal("f_cat"))miss.push("品类");if(!getVal("f_who"))miss.push("诊断人");if(!getVal("f_date"))miss.push("日期");const el=document.getElementById("infoRemind");const bar=document.querySelector(".storebar");if(miss.length){el.style.display="block";el.innerHTML="⚠ 请补全门店信息："+miss.join(" / ")+"（关系到诊断报告归属，建议开干前填好）";if(bar)bar.classList.add("warn");}else{el.style.display="none";if(bar)bar.classList.remove("warn");}}
+function loadInfo(){const o=JSON.parse(localStorage.getItem(LS_INFO)||"{}");Object.keys(o).forEach(id=>{if(document.getElementById(id))document.getElementById(id).value=o[id];});if(!o.f_date)document.getElementById("f_date").value=new Date().toISOString().slice(0,10);}
+
+/* ===== 重置 ===== */
+function resetAll(){if(!confirm("确定清空所有评分、问题描述与照片？门店信息保留。"))return;ST={};NT={};PICS={};saveState();localStorage.setItem(LS_NOTE,"{}");savePics();const b=document.getElementById("demobanner");if(b)b.style.display="none";renderStations();updateDash();applyFilter();showToast("已清空所有评分、照片与描述");}
+
+/* ===== 导出CSV ===== */
+function exportCSV(){
+  const info=JSON.parse(localStorage.getItem(LS_INFO)||"{}");
+  const map={ok:"合格",warn:"轻微",bad:"漏钱",undefined:"未诊断","":"未诊断"};
+    const head=["站位","序号","经营触点","顾客旅程","经营系统","损耗类型","权重","检查小项","怎么查","合格标准","诊断结果","问题描述","整改方向"];
+    const rows=[["门店",info.f_store||"","品类",info.f_cat||"","诊断人",info.f_who||"","日期",info.f_date||"","","","","","",""],head];
+  STATIONS.forEach(s=>s.tps.forEach(t=>t.items.forEach((it,i)=>{
+    const k=key(t.id,i);
+        rows.push([s.name,t.id,t.tp,t.jn,t.sys,t.loss,tpWeight(t),it.n,it.a,it.s,map[ST[k]||""],NT[k]||"",FIX[t.id]||""]);
+  })));
+  const csv="\uFEFF"+rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
+  a.download=`STDM诊断_${info.f_store||"门店"}_${info.f_date||""}.csv`;a.click();
+}
+
+/* ===== 诊断报告（咨询交付物质感） ===== */
+/* 多边形（雷达）图：当前店红实线 vs 行业基准灰虚线 */
+function exportPack(){
+  const info=JSON.parse(localStorage.getItem(LS_INFO)||"{}");
+    const pack={v:VERSION,store:info,st:ST,nt:NT,pics:PICS,date:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(pack,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.download="STDM诊断包_"+(info.f_store||"门店")+"_"+(info.f_date||"").replace(/:/g,"")+".json";
+  a.href=URL.createObjectURL(blob);a.click();URL.revokeObjectURL(a.href);
+}
+function importPack(input){
+  const file=input.files[0];if(!file)return;
+  const rd=new FileReader();
+  rd.onload=function(){
+    try{
+      const pack=JSON.parse(rd.result);
+      if(pack.st)ST=pack.st;
+      if(pack.nt)NT=pack.nt;
+            if(pack.pics)PICS=pack.pics;
+      if(pack.store)localStorage.setItem(LS_INFO,JSON.stringify(pack.store));
+            saveState();localStorage.setItem(LS_NOTE,JSON.stringify(NT));savePics();
+      loadInfo();renderStations();updateDash();applyFilter();renderFixList();enterStations();
+      alert("诊断包已导入，评分与照片已恢复");
+    }catch(e){alert("导入失败：文件格式错误");}
+  };
+  rd.readAsText(file);
+  input.value="";
+}
+
+function radarSVG(labels,vals,bench){
+  const W=320,H=300,cx=W/2,cy=H/2+6,R=104,N=labels.length;
+  const ang=i=>(-Math.PI/2)+i*2*Math.PI/N;
+  const pt=(i,r)=>[ (cx+r*Math.cos(ang(i))).toFixed(1), (cy+r*Math.sin(ang(i))).toFixed(1) ];
+  let grid="";
+  [20,40,60,80,100].forEach(g=>{
+    const p=labels.map((_,i)=>pt(i,R*g/100).join(",")).join(" ");
+    grid+=`<polygon points="${p}" fill="none" stroke="#ececec" stroke-width="1"/>`;
+  });
+  let axes="";
+  labels.forEach((lb,i)=>{const [x,y]=pt(i,R);axes+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#ececec" stroke-width="1"/>`;});
+  const bpts=labels.map((_,i)=>pt(i,R*bench/100).join(",")).join(" ");
+  const spts=labels.map((_,i)=>pt(i,R*vals[i]/100).join(",")).join(" ");
+  let lab="";
+  labels.forEach((lb,i)=>{
+    const [x,y]=pt(i,R+20);
+    lab+=`<text x="${x}" y="${y}" text-anchor="middle" font-size="11" fill="#222" dominant-baseline="middle">${lb}</text>`;
+    const [vx,vy]=pt(i,R*vals[i]/100);
+    lab+=`<text x="${vx}" y="${(+vy-5).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#c0392b">${vals[i]}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px">${grid}${axes}`
+    +`<polygon points="${bpts}" fill="none" stroke="#9a9a9a" stroke-width="1.5" stroke-dasharray="5 3"/>`
+    +`<polygon points="${spts}" fill="rgba(192,57,43,.16)" stroke="#c0392b" stroke-width="2"/>${lab}</svg>`;
+}
+/* 健康分半圆仪表盘 */
+function gaugeSVG(score){
+  const W=200,H=120,cx=100,cy=108,R=86;
+  const ang=s=>Math.PI-(s/100)*Math.PI;
+  const arc=(s,col)=>{
+    const a=ang(s),x=(cx+R*Math.cos(a)).toFixed(1),y=(cy-R*Math.sin(a)).toFixed(1);
+    return `<path d="M ${(cx-R).toFixed(1)} ${cy} A ${R} ${R} 0 0 1 ${x} ${y}" fill="none" stroke="${col}" stroke-width="13" stroke-linecap="round"/>`;
+  };
+  const col=score<BENCH?"#c0392b":(score<92?"#e0a106":"#2e7d32");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:200px">`
+    +arc(100,"#eee")+arc(score,col)
+    +`<text x="${cx}" y="${cy-20}" text-anchor="middle" font-size="40" font-weight="800" fill="${col}">${score}</text>`
+    +`<text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="11" fill="#888">经营健康分 / 100</text>`
+    +`<text x="${(cx-R).toFixed(1)}" y="${cy+16}" text-anchor="middle" font-size="9" fill="#bbb">0</text>`
+    +`<text x="${(cx+R).toFixed(1)}" y="${cy+16}" text-anchor="middle" font-size="9" fill="#bbb">100</text>`
+    +`</svg>`;
+}
+function generateReport(){
+  const info=JSON.parse(localStorage.getItem(LS_INFO)||"{}");
+  const tps=allTps();
+  let done=0,sum=0,bad=0,warn=0;
+  tps.forEach(t=>t.items.forEach((_,i)=>{
+    const v=ST[key(t.id,i)];
+    if(v){done++; sum+=v==="ok"?1:v==="warn"?.5:0; if(v==="bad")bad++; if(v==="warn")warn++;}
+  }));
+  if(!done){document.getElementById("reportMeta").innerHTML=`${info.f_store||"—"} · ${info.f_cat||"—"} · ${info.f_who||"—"} · ${info.f_date||"—"}`;document.getElementById("reportBody").innerHTML='<div class="rep-bench-note">尚未完成任何诊断项，请返回勾选评分后再生成报告。</div>';document.getElementById("report").style.display="block";document.body.classList.add("report-open");return;}
+  const totalItems=allItemsCount();
+  const unrated=totalItems-done;
+  if(unrated>0 && !confirm(`还有 ${unrated} 项未诊断（未评项按 0 分计入健康分，会拉低健康分）。确定继续生成报告？`)) return;
+  const missInfo=[];if(!info.f_store)missInfo.push("门店");if(!info.f_cat)missInfo.push("品类");if(!info.f_who)missInfo.push("诊断人");if(!info.f_date)missInfo.push("日期");
+  if(missInfo.length && !confirm("门店信息未填全（缺："+missInfo.join(" / ")+"），报告将缺归属信息。仍要生成？可在评分页顶部补全后再生成。")) return;
+  const redTriggered=tps.some(t=>t.redline && t.items.some((_,i)=>ST[key(t.id,i)]==="bad"));
+  const o=wStatsAll();
+  let score=done?Math.round(o.num/o.den*100):0;
+  if(redTriggered) score=Math.min(score,60);
+    const stageScores=JOURNEYS.map(jn=>{const st=wStats(tps.filter(t=>t.jn===jn));return{jn,pct:st.w?Math.round(st.sm/st.w*100):0,bd:st.bd,rated:st.rated};});
+    const worstStages=stageScores.filter(s=>s.rated>0 && s.pct<BENCH).sort((a,b)=>a.pct-b.pct).slice(0,3);
+    const sysScores=SYSTEMS.map(sys=>{const st=wStats(tps.filter(t=>t.sys===sys));return{sys,pct:st.w?Math.round(st.sm/st.w*100):0,bd:st.bd,rated:st.rated};});
+    const worstSys=sysScores.filter(s=>s.rated>0 && s.pct<BENCH).sort((a,b)=>a.pct-b.pct).slice(0,3);
+  const lossCounts=LOSS_TYPES.map(lt=>{
+    let r=0,tot=0;tps.filter(t=>t.loss===lt).forEach(t=>t.items.forEach((_,i)=>{tot++;if(ST[key(t.id,i)]==="bad")r++;}));return {lt,r,tot};
+  }).filter(x=>x.r>0).sort((a,b)=>b.r-a.r);
+  let rows=[];let seen={};tps.forEach(t=>t.items.forEach((it,i)=>{
+    const v=ST[key(t.id,i)];if(v==="ok"||!v)return;
+    const k=key(t.id,i);
+    if(seen[t.id]){const idx=seen[t.id];if(v==="bad" && rows[idx].v!=="bad") rows[idx]={t,it,v,note:NT[k]||"",k};}
+    else{seen[t.id]=rows.length;rows.push({t,it,v,note:NT[k]||"",k});}
+  }));
+  // 一句话结论
+  let conclusion=`本次诊断覆盖 ${done}/${totalItems} 项${unrated?`（<b>${unrated}</b> 项未评，按 0 分计入健康分）`:""}。<br>`;
+  conclusion+=redTriggered?'⚠ 食安红线触发（明档/食材、餐具卫生存在漏钱），本店直接判定为<b>高危级</b>，健康分已封顶。':'本店经营健康分 <b>'+score+'%</b>，';
+  if(worstSys.length) conclusion+=`最薄弱的是 <b>${worstSys.map(s=>s.sys.replace("系统","")).join("、")}</b> 系统；`;
+  if(worstStages.length) conclusion+=`顾客旅程中 <b>${worstStages.map(s=>s.jn).join("、")}</b> 阶段漏损最集中；`;
+  if(lossCounts.length) conclusion+=`核心损耗为 <b>${lossCounts.slice(0,3).map(x=>x.lt).join("、")}</b>。`;
+  if(rows.length) conclusion+=`建议优先整改 ${rows.slice(0,3).map(r=>`「${r.t.tp}」`).join("、")} 等 <b>${rows.length}</b> 项，快速止血、提升转化。`;
+  else conclusion="当前诊断结果良好，无明显漏钱项。建议保持现有标准并持续迭代细节。";
+  document.getElementById("reportMeta").innerHTML=`${info.f_store||"—"}　·　${info.f_cat||"—"}　·　诊断人 ${info.f_who||"—"}　·　${info.f_date||"—"}`;
+  const sysRadar=radarSVG(SYSTEMS.map(s=>s.replace("系统","")), sysScores.map(s=>s.pct), BENCH);
+  const jnRadar=radarSVG(JOURNEYS, stageScores.map(s=>s.pct), BENCH);
+  const watchCards=worstSys.map(w=>({t:w.sys.replace("系统",""),pct:w.pct,bd:w.bd})).concat(worstStages.map(w=>({t:w.jn,pct:w.pct,bd:w.bd})));
+  document.getElementById("reportBody").innerHTML=`
+    <div class="rep-hero">
+      <div class="rep-gauge">${gaugeSVG(score)}</div>
+      <div class="rep-hero-right">
+        <div class="rep-kpis">
+          <div class="rep-kpi"><div class="v ok">${done}</div><div class="l">已诊断项</div></div>
+          <div class="rep-kpi"><div class="v red">${bad}</div><div class="l">漏钱项 ✗</div></div>
+          <div class="rep-kpi"><div class="v amber">${warn}</div><div class="l">预警项 ⚠</div></div>
+        </div>
+        <div class="rep-conclusion">${conclusion}</div>
+      </div>
+    </div>
+
+    <div class="rep-section">
+      <div class="rep-h"><b>健康度画像</b>　/ Health Profile　—　红实线＝本店　·　灰虚线＝行业基准（${BENCH}分）</div>
+      <div class="rep-radars">
+        <div class="rep-radar"><h4>七大经营系统</h4><div class="sub">System Health</div>${sysRadar}
+          <div class="rep-legend"><span><i></i>本店</span><span><i class="b"></i>行业基准</span></div></div>
+        <div class="rep-radar"><h4>六段顾客旅程</h4><div class="sub">Journey Health</div>${jnRadar}
+          <div class="rep-legend"><span><i></i>本店</span><span><i class="b"></i>行业基准</span></div></div>
+      </div>
+      <div class="rep-bench-note">解读：多边形越外扩、越贴近或超越灰色基准线越健康。本店在 <b>${worstSys.slice(0,2).map(s=>s.sys.replace("系统","")).join("、")||"各"}</b> 等维度明显内收，是后续整改重点。　｜　计分规则：食安红线项与转化损耗项权重 ×2，未诊断项按漏钱计入真实健康分。</div>
+    </div>
+
+    ${redTriggered?`<div class="rep-section rep-redline"><div class="rep-h"><b>食安专项预警</b>　/ Food Safety Redline</div><div class="rep-redline-body">⚠ 检测到食安红线项（明档/食材、餐具卫生）存在「漏钱」，门店直接判定为<b>高危级</b>，健康分已封顶 ${score} 分。请立即停业整改、复查通过后方可解除预警。</div></div>`:""}
+    <div class="rep-section">
+      <div class="rep-h"><b>核心损耗排行</b>　/ Top Losses（漏钱项 / 该类型总项数）</div>
+      ${lossCounts.map(x=>`<div class="rep-loss"><span class="ln">${x.lt}</span><span class="lt"><span class="lf" style="width:${Math.round(x.r/x.tot*100)}%"></span></span><span class="lv">${x.r}/${x.tot}</span></div>`).join("")||'<div class="rep-bench-note">暂无漏钱项，经营损耗控制良好。</div>'}
+    </div>
+
+    <div class="rep-section">
+      <div class="rep-h"><b>最薄弱模块</b>　/ Watchlist（低于基准 ${BENCH} 分）</div>
+      <div class="rep-watch">
+        ${watchCards.map(w=>`<div class="rep-wcard"><div class="wt">${w.t}</div><div class="ws ${w.pct>=BENCH?'ok':''}">${w.pct}<span style="font-size:14px">分</span></div><div class="wd">${w.bd} 项漏钱</div></div>`).join("")||'<div class="rep-bench-note">全部模块达标，表现均衡。</div>'}
+      </div>
+    </div>
+
+    <div class="rep-section">
+      <div class="rep-h"><b>问题与整改清单</b>　/ Action List（${rows.length} 项）</div>
+      <div class="rep-list">${rows.map(r=>{
+        const pic=PICS[r.k]?`<img class="rep-thumb" src="${PICS[r.k]}">`:"";
+        
+        return `<div class="rep-item fix-row ${r.v}"><div class="fr-top"><span class="fr-tp">${r.t.tp}</span><span class="chip">${r.t.jn}</span><span class="chip sys">${r.t.sys}</span><span class="fr-flag">${r.v==="bad"?"✗ 漏钱":"⚠ 预警"}</span></div><div class="fr-body">${pic}<div class="fr-line"><span class="k k-fix" style="color:var(--red)">问题 · </span>${r.note||"（未填写具体描述）"}</div><div class="fr-line"><span class="k k-fix">整改方向 · </span>${genFix(r.t,r.note)}</div></div></div>`;
+      }).join("")}</div>
+    </div>
+
+    <div class="rep-foot">本报告由 位道策划 · 门店经营触点诊断地图 STDM 自动生成　|　STDM v${VERSION}</div>
+  `;
+  document.getElementById("report").style.display="block";
+  document.body.classList.add("report-open");
+}
+
+function exportXHSData(){
+  const info=JSON.parse(localStorage.getItem(LS_INFO)||"{}");
+  const tps=allTps();
+  const totalItems=allItemsCount();
+  let done=0,bad=0,warn=0;
+  tps.forEach(t=>t.items.forEach((_,i)=>{const v=ST[key(t.id,i)];if(v){done++;if(v==="bad")bad++;else if(v==="warn")warn++;}}));
+  const o=wStatsAll();
+  let score=done?Math.round(o.num/o.den*100):0;
+  const redTriggered=tps.some(t=>t.redline && t.items.some((_,i)=>ST[key(t.id,i)]==="bad"));
+  if(redTriggered) score=Math.min(score,60);
+  let rows=[];let seen={};
+  tps.forEach(t=>t.items.forEach((it,i)=>{
+    const v=ST[key(t.id,i)];if(v==="ok"||!v)return;
+    const k=key(t.id,i);
+    if(t.id in seen){const idx=seen[t.id];if(v==="bad" && rows[idx].v!=="bad") rows[idx]={t,it,v,note:NT[k]||"",k};}
+    else{seen[t.id]=rows.length;rows.push({t,it,v,note:NT[k]||"",k});}
+  }));
+  rows.sort((a,b)=>((a.v==="bad"?0:1)-(b.v==="bad"?0:1))||((LOSS_PRIORITY[a.t.loss]||9)-(LOSS_PRIORITY[b.t.loss]||9)));
+  const sysScores={};SYSTEMS.forEach(sys=>{const st=wStats(tps.filter(t=>t.sys===sys));sysScores[sys]=st.w?Math.round(st.sm/st.w*100):0;});
+  const stageScores={};JOURNEYS.forEach(jn=>{const st=wStats(tps.filter(t=>t.jn===jn));stageScores[jn]=st.w?Math.round(st.sm/st.w*100):0;});
+  const lossCounts={};LOSS_TYPES.forEach(lt=>{let r=0,tot=0;tps.filter(t=>t.loss===lt).forEach(t=>t.items.forEach((_,i)=>{tot++;if(ST[key(t.id,i)]==="bad")r++;}));if(r>0) lossCounts[lt]={r,tot};});
+  // 动态全部渲染：有几个机会点就生成几张详情页（不再截断前 3）
+  const issues=rows.map(r=>{
+    const k=key(r.t.id,r.t.items.indexOf(r.it));
+    let fix = genFix(r.t,r.note);
+    if(fix.startsWith('整改建议：')) fix = fix.slice(5);
+    return {
+      id:r.t.id, tp:r.t.tp, jn:r.t.jn, sys:r.t.sys, loss:r.t.loss, state:r.v==="bad"?"✗ 漏钱":"⚠ 预警",
+      why:r.t.why||"", impact:r.t.impact||"", fix, img:!!PICS[k], photo: PICS[k]?PICS[k]:null
+    };
+  });
+  const brandShort = (info.f_store||"—").replace(/（.*$/,'').replace(/\s+/g,'').slice(0,8);
+  const payload={
+    brand:brandShort, score, opps:rows.length,
+    systems:sysScores, journeys:stageScores, losses:Object.keys(lossCounts).map(k=>({name:k, n:lossCounts[k].r, total:lossCounts[k].tot})),
+    issues, done, total:totalItems, bad, warn, redTriggered, date:info.f_date||new Date().toISOString().slice(0,10), who:info.f_who||"—", cat:info.f_cat||"—"
+  };
+  localStorage.setItem("xhs_data", JSON.stringify(payload));
+  // JSON 下载
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="xhs_stdm_data.json";a.click();
+  // 打开同域预览页（顶部有「下载 PNG」按钮，可直接浏览器出图）
+  try{ window.open('xhs_preview.html', '_blank'); }catch(e){ console.error('打开预览页失败', e); }
+  // 生成可直接打开的独立 HTML（内嵌数据）
+  fetch('xhs_preview.html').then(r=>r.text()).then(tpl=>{
+    const injected = `window.__XHS_DATA__ = ${JSON.stringify(payload)};\n`;
+    // 在 <script> 标签后注入数据，让 loadXHSData 优先读取并覆盖默认值
+    const out = tpl.replace(/<script>\n/, `<script>\n${injected}`);
+    const htmlBlob = new Blob([out], {type:"text/html"});
+    const a2=document.createElement("a");a2.href=URL.createObjectURL(htmlBlob);a2.download="xhs_preview.html";a2.click();
+    alert("小红书图文已准备：\n1. 已打开「小红书图文预览」页，打开后会自动生成并下载「小红书分图 ZIP」与「诊断报告长图 PDF」；\n2. 若浏览器拦截自动下载，请点击顶部「下载全部图片 (ZIP)」「下载报告 PDF」手动获取；\n3. xhs_stdm_data.json 已下载（供本地 node export_xhs.js 高质量导出）；\n4. xhs_preview.html 已下载（内嵌数据，可离线打开）。");
+  }).catch(e=>{
+    console.error('生成独立预览 HTML 失败', e);
+    alert("小红书图文已准备：\n1. 已打开「小红书图文预览」页，打开后会自动生成并下载分图 ZIP 与报告 PDF；\n2. 若自动下载被拦截，请点击顶部按钮手动获取；\n3. xhs_stdm_data.json 已下载。\n\n若浏览器端生成异常，请使用 node export_xhs.js。");
+  });
+}
+function closeReport(){document.getElementById("report").style.display="none";document.body.classList.remove("report-open");}
+function printReport(){window.print();}
+
+function openZoom(src){const im=document.getElementById("imgzoomImg");if(im)im.src=src;const z=document.getElementById("imgzoom");if(z)z.classList.add("show");}
+document.addEventListener("click",function(e){const t=e.target;if(t.classList&&(t.classList.contains("rep-thumb")||t.classList.contains("pic-thumb"))){e.preventDefault();openZoom(t.src);}});
+function delPic(k){if(!confirm("确定删除这张展位图片？"))return;delete PICS[k];savePics();renderStations();}
+document.addEventListener("click",function(e){const d=e.target;if(d.classList&&d.classList.contains("pic-del")){e.preventDefault();delPic(d.dataset.k);}});
+const _vb=document.getElementById("verBadge"); if(_vb)_vb.textContent="v"+VERSION;
+renderNav();renderStations();loadInfo();updateDash();applyFilter();document.getElementById("landVer").textContent="v"+VERSION;
+</script>
+<div class="imgzoom" id="imgzoom" onclick="this.classList.remove('show')"><img id="imgzoomImg" alt=""></div>
+</body>
+</html>
