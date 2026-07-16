@@ -206,7 +206,7 @@
 <body>
 <div class="toolbar" id="toolbar">
   <span class="tb-title">STDM 小红书图文预览</span>
-  <span class="tb-desc">打开后自动生成小红书分图（ZIP）与诊断报告长图（PDF）；如浏览器端异常，请用本地 node export_xhs.js。</span>
+  <span class="tb-desc">预览就绪后，点击上方按钮下载小红书分图（ZIP）与诊断报告长图（PDF）；如浏览器端异常，请用本地 node export_xhs.js。</span>
   <span class="tb-status" id="tb-status"></span>
   <button class="tb-btn secondary" onclick="downloadJSON()">下载 JSON</button>
   <button class="tb-btn secondary" onclick="generateReportPDF()">下载报告 PDF</button>
@@ -615,7 +615,7 @@ function buildReportLongHTML(){
     <div class="rl-disc">※ 本报告基于单次实地到店诊断，结论仅代表该门店当次经营表现，不代表品牌整体及旗下其他门店水平。${HAS_REAL_DATA?'':'【演示】本案例基于公开网络资料模拟生成，非真实到店 SI 诊断，仅用于流程演示。'}</div>
     <div class="rl-ft">
       <div><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="r">STDM v${'2.6.21'}</div>
+      <div class="r">STDM v2.6.23</div>
     </div>
   </div>`;
 }
@@ -632,6 +632,14 @@ async function generateReportPDF(){
     const wrap = document.createElement('div');
     wrap.innerHTML = buildReportLongHTML();
     const el = wrap.firstElementChild;
+    // 报告长图默认 position:fixed;left:-10000px（移出视口），
+    // 直接截图会被 htmlToImage 画到画布外导致空白 PDF。
+    // 捕获时临时改为正常定位，截图后移除。
+    el.style.position = 'absolute';
+    el.style.left = '0';
+    el.style.top = '0';
+    el.style.width = '1080px';
+    el.style.margin = '0';
     document.body.appendChild(el);
     await document.fonts.ready;
     await new Promise(r=>setTimeout(r,300));
