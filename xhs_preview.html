@@ -119,6 +119,8 @@
   .p-con .losses .bar{flex:1;height:11px;background:rgba(43,41,38,.10);margin:0 var(--sp-2);position:relative;}
   .p-con .losses .bar i{position:absolute;left:0;top:0;height:100%;background:var(--red);}
   .p-con .losses .count{width:36px;text-align:right;font-size:16px;color:var(--ink60);font-family:var(--sans);}
+  .p-con .con-text{background:rgba(168,82,74,.08);border-left:6px solid var(--red);padding:var(--sp-3) var(--sp-4);margin-top:var(--sp-4);font-size:18px;line-height:1.7;color:var(--ink);}
+  .p-con .con-text b{color:var(--red);font-weight:700;}
 
   /* 详情页 —— 内容优先，大图占满；单页间距与合并页统一 */
   .p-detail .pg-bd{flex:1;justify-content:center;gap:var(--sp-5);}
@@ -401,7 +403,34 @@ function renderCover(totalPages){
   </div></div>`;
 }
 
+function buildConclusionText(){
+  const parts = [];
+  const unrated = META.total ? Math.max(0, META.total - META.done) : 0;
+  if(META.total){
+    let s = `本次诊断覆盖 ${META.done}/${META.total} 项`;
+    if(unrated > 0) s += `（<b>${unrated}</b> 项未评，按 0 分计入健康分）`;
+    s += '。';
+    parts.push(s);
+  }
+  if(META.redTriggered){
+    parts.push('⚠ 食安红线触发（明档/食材、餐具卫生存在漏钱），本店直接判定为<b>高危级</b>，健康分已封顶。');
+  } else {
+    parts.push(`本店经营健康分 <b>${DATA.score}%</b>，`);
+  }
+  const sysEntries = Object.entries(SAMPLE.systems).sort((a,b)=>a[1]-b[1]);
+  const worstSys = sysEntries.filter(([k,v])=> v < 75).slice(0,2);
+  if(worstSys.length) parts.push(`最薄弱的是 <b>${worstSys.map(([k,v])=>k.replace(/系统$/,'')).join('、')}</b> 系统；`);
+  const jnyEntries = Object.entries(SAMPLE.journeys).sort((a,b)=>a[1]-b[1]);
+  const worstJny = jnyEntries.filter(([k,v])=> v < 75).slice(0,2);
+  if(worstJny.length) parts.push(`顾客旅程中 <b>${worstJny.map(([k,v])=>k).join('、')}</b> 阶段漏损最集中；`);
+  const lossList = SAMPLE.losses.filter(l=>l.n>0).sort((a,b)=>b.n-a.n);
+  if(lossList.length) parts.push(`核心损耗为 <b>${lossList.slice(0,3).map(l=>l.name).join('、')}</b>。`);
+  if(OPPS.length) parts.push(`建议优先整改 ${OPPS.slice(0,3).map(o=>`「${o.tp}」`).join('、')} 等 <b>${OPPS.length}</b> 项，快速止血、提升转化。`);
+  return parts.join('');
+}
+
 function renderConclusion(totalPages){
+  const conText = buildConclusionText();
   const sysSvg = polar(SAMPLE.systems, ['品牌','产品','空间','服务','运营','关系','信任'], 430, 380, 34);
   const jnySvg = polar(SAMPLE.journeys, ['看得见','找得着','等得住','进得来','吃得好','会再来'], 430, 380, 34);
   const lossBars = SAMPLE.losses.map(l=>{
@@ -424,6 +453,7 @@ function renderConclusion(totalPages){
           <div class="k"><div class="t">顾客旅程</div><div class="v">6</div><div class="u">段漏斗诊断</div></div>
         </div>
       </div>
+      <div class="con-text">${conText}</div>
       <div class="charts">
         <div class="chart"><div class="ct">七大经营系统</div><div class="ce">SYSTEM HEALTH · 虚线 = 行业基准 80</div>${sysSvg}</div>
         <div class="chart"><div class="ct">六段顾客旅程</div><div class="ce">JOURNEY HEALTH · 虚线 = 行业基准 80</div>${jnySvg}</div>
@@ -700,7 +730,7 @@ function buildReportLongHTML(){
     <div class="rl-disc">※ 本报告基于单次实地到店诊断，结论仅代表该门店当次经营表现，不代表品牌整体及旗下其他门店水平。${HAS_REAL_DATA?'':'【演示】本案例基于公开网络资料模拟生成，非真实到店 SI 诊断，仅用于流程演示。'}</div>
     <div class="rl-ft">
       <div><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="r">STDM v2.6.36</div>
+      <div class="r">STDM v2.6.37</div>
     </div>
   </div>`;
 }
