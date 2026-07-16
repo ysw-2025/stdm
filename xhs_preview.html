@@ -120,17 +120,17 @@
   .p-con .losses .bar i{position:absolute;left:0;top:0;height:100%;background:var(--red);}
   .p-con .losses .count{width:36px;text-align:right;font-size:16px;color:var(--ink60);font-family:var(--sans);}
 
-  /* 详情页（有图单页）—— 原始紧凑版式，勿动 */
+  /* 详情页 —— 内容优先，大图占满；单页间距与合并页统一 */
   .p-detail .pg-bd{flex:1;justify-content:center;gap:var(--sp-5);}
-  .p-detail .tp-row{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:flex-end;}
-  .p-detail .tp-name{width:100%;font-size:48px;font-weight:900;line-height:1.1;font-family:var(--title);white-space:nowrap;}
+  .p-detail .tp-row{display:flex;flex-wrap:wrap;gap:var(--sp-2);row-gap:0;align-items:flex-end;}
+  .p-detail .tp-name{width:100%;font-size:48px;font-weight:900;line-height:1.1;font-family:var(--title);white-space:nowrap;margin-bottom:var(--sp-3);}
   .p-detail .tp-meta{display:flex;gap:var(--sp-2);align-items:center;}
   .p-detail .chip{padding:var(--sp-1) var(--sp-3);font-size:18px;border:1px solid var(--line);color:var(--ink60);}
   .p-detail .chip.red{border-color:var(--red);color:var(--red);font-weight:700;}
 
-  .p-detail .why-block{background:rgba(168,82,74,.08);padding:var(--sp-3) var(--sp-4);border-left:6px solid var(--red);}
+  .p-detail .why-block{background:rgba(168,82,74,.08);padding:var(--sp-3) var(--sp-4);border-left:6px solid var(--red);margin-top:var(--sp-4);}
   .p-detail .why-block .st{font-size:18px;font-weight:700;letter-spacing:.08em;color:var(--red);margin-bottom:var(--sp-2);}
-  .p-detail .why-block .sb{font-size:26px;line-height:1.6;color:var(--ink);font-weight:500;}
+  .p-detail .why-block .sb{font-size:26px;line-height:1.7;color:var(--ink);font-weight:500;}
 
   .p-detail .impact-fix{display:grid;grid-template-columns:1.2fr 1fr;gap:var(--sp-4);}
   .p-detail .impact-fix .col{display:flex;flex-direction:column;gap:var(--sp-4);}
@@ -147,7 +147,7 @@
   .p-detail-item + .p-detail-item{border-top:2px solid var(--line);padding-top:var(--sp-5);}
   .p-detail-double .tp-row{row-gap:0;}
   .p-detail-double .tp-name{font-size:38px;margin-bottom:var(--sp-3);}
-  .p-detail-double .why-block{padding:var(--sp-2) var(--sp-3);}
+  .p-detail-double .why-block{padding:var(--sp-2) var(--sp-3);margin-top:0;}
   .p-detail-double .why-block .sb{font-size:22px;line-height:1.7;}
   .p-detail-double .impact-fix{gap:var(--sp-3);}
   .p-detail-double .sec .sb{font-size:18px;line-height:1.7;}
@@ -697,7 +697,7 @@ function buildReportLongHTML(){
     <div class="rl-disc">※ 本报告基于单次实地到店诊断，结论仅代表该门店当次经营表现，不代表品牌整体及旗下其他门店水平。${HAS_REAL_DATA?'':'【演示】本案例基于公开网络资料模拟生成，非真实到店 SI 诊断，仅用于流程演示。'}</div>
     <div class="rl-ft">
       <div><div class="a">位道策划 · 杨首位</div><div class="b">连锁品牌 SI 空间标准化设计 · 连锁五力模型理论创始人</div></div>
-      <div class="r">STDM v2.6.32</div>
+      <div class="r">STDM v2.6.33</div>
     </div>
   </div>`;
 }
